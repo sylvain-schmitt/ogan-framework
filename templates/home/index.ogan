@@ -1,0 +1,102 @@
+{{ extend('layouts/base') }}
+
+{{ start('body') }}
+
+<div class="text-center mb-12">
+	<h1 class="text-4xl font-bold text-gray-800 mb-4">Bienvenue sur
+		{{ name }}
+		!</h1>
+	<p class="text-xl text-gray-600">Démonstration du moteur de template avancé.</p>
+	{% if isset(user_count) %}
+		<p class="text-lg text-gray-500 mt-2">{{ user_count }}
+			utilisateur(s) enregistré(s)</p>
+	{% endif %}
+</div>
+
+<div class="mb-8 text-center">
+	<a href="{{ route('user_list') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block mr-2">
+		👤 Gérer les utilisateurs
+	</a>
+	<a href="{{ route('user_register') }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded inline-block mr-2">
+		📝 S'inscrire
+	</a>
+	<a href="{{ route('user_login') }}" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded inline-block">
+		🔐 Se connecter
+	</a>
+</div>
+
+<!-- Section démonstration des nouvelles routes -->
+<div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 mb-8">
+	<h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">🛣️ Exemples de Routes avec Détection Automatique</h2>
+	<p class="text-gray-600 text-center mb-6">Testez les nouvelles fonctionnalités du router !</p>
+
+	<div
+		class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+		<!-- Route {id} -->
+		<div class="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition">
+			<h3 class="font-bold text-purple-700 mb-2">📦 {id} → Numérique</h3>
+			<p class="text-sm text-gray-600 mb-3">Le paramètre {id} n'accepte que des nombres.</p>
+			<a href="{{ route('article_show', ['id' => 42]) }}" class="bg-purple-500 hover:bg-purple-600 text-white text-sm px-3 py-1 rounded block text-center">
+				/article/42
+			</a>
+		</div>
+
+		<!-- Route {slug} -->
+		<div class="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition">
+			<h3 class="font-bold text-blue-700 mb-2">📝 {slug} → URL-Friendly</h3>
+			<p class="text-sm text-gray-600 mb-3">Le paramètre {slug} accepte les slugs URL.</p>
+			<a href="{{ route('post_show', ['slug' => 'mon-super-article']) }}" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded block text-center">
+				/post/mon-super-article
+			</a>
+		</div>
+
+		<!-- Route {query} optionnelle -->
+		<div class="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition">
+			<h3 class="font-bold text-green-700 mb-2">🔍 {query} → Optionnel</h3>
+			<p class="text-sm text-gray-600 mb-3">Le paramètre {query} est optionnel automatiquement.</p>
+			<div class="space-y-2">
+				<a href="{{ route('search') }}" class="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded block text-center">
+					/search (sans query)
+				</a>
+				<a href="{{ route('search', ['query' => 'hello']) }}" class="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded block text-center">
+					/search/hello
+				</a>
+			</div>
+		</div>
+
+		<!-- Route {page} -->
+		<div class="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition">
+			<h3 class="font-bold text-orange-700 mb-2">📄 {page} → Pagination</h3>
+			<p class="text-sm text-gray-600 mb-3">Le paramètre {page} est numérique.</p>
+			<a href="{{ route('products_page', ['page' => 3]) }}" class="bg-orange-500 hover:bg-orange-600 text-white text-sm px-3 py-1 rounded block text-center">
+				/products/page/3
+			</a>
+		</div>
+	</div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+	{% for feature in features %}
+		{{ component('card', [
+                'title' => feature['title'],
+                'content' => feature['description'],
+                'image' => feature['image'] ?? null,
+                'link' => feature['link'] ?? '#'
+            ]) }}
+	{% endfor %}
+</div>
+
+<div class="mt-12 p-6 bg-gray-50 rounded-xl border border-gray-200">
+	<h3 class="text-2xl font-bold mb-4">Code des routes :</h3>
+	<pre class="bg-gray-800 text-green-400 p-4 rounded overflow-auto text-sm"><?= htmlspecialchars('#[Route(path: \'/article/{id}\', methods: [\'GET\'])]
+// {id} → automatiquement contraint à \d+ (numérique)
+
+#[Route(path: \'/post/{slug}\', methods: [\'GET\'])]
+// {slug} → automatiquement contraint à [a-z0-9-]+ (slug)
+
+#[Route(path: \'/search/{query}\', methods: [\'GET\'])]
+// {query} → automatiquement optionnel !
+
+#[Route(path: \'/products/page/{page}\', methods: [\'GET\'])]
+// {page} → automatiquement contraint à \d+ (numérique)') ?></pre>
+</div>{{ end }}

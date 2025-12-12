@@ -1,0 +1,146 @@
+# ═══════════════════════════════════════════════════════════════════════
+# DOCKER COMPOSE - OGAN FRAMEWORK
+# ═══════════════════════════════════════════════════════════════════════
+# 
+# Démarre rapidement les services pour le développement
+# 
+# UTILISATION :
+# 1. Démarrez les services : docker-compose up -d
+# 2. Configurez votre .env avec les valeurs ci-dessous
+# 3. Arrêtez les services : docker-compose down
+# 
+# SERVICES PAR DÉFAUT :
+# - MySQL 8.0 (port 3306) - Base de données principale
+# - phpMyAdmin (port 8080) - Interface web pour MySQL
+# - MailHog (port 8025) - Serveur SMTP de test pour les emails
+# 
+# SERVICES OPTIONNELS (décommenter si nécessaire) :
+# - PostgreSQL 15 (port 5432)
+# - pgAdmin (port 5050) - Interface web pour PostgreSQL
+# 
+# ═══════════════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  # ───────────────────────────────────────────────────────────────────
+  # MySQL 8.0 - Base de données par défaut
+  # ───────────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: ogan_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ogan_framework
+      MYSQL_USER: ogan
+      MYSQL_PASSWORD: ogan
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ogan_network
+
+  # ───────────────────────────────────────────────────────────────────
+  # MailHog - Serveur SMTP de test pour les emails
+  # ───────────────────────────────────────────────────────────────────
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: ogan_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Interface web
+    networks:
+      - ogan_network
+
+  # ───────────────────────────────────────────────────────────────────
+  # PostgreSQL 15 - OPTIONNEL (décommenter si nécessaire)
+  # ───────────────────────────────────────────────────────────────────
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: ogan_postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: ogan_framework
+  #     POSTGRES_USER: ogan
+  #     POSTGRES_PASSWORD: ogan
+  #     PGDATA: /var/lib/postgresql/data/pgdata
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ogan"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - ogan_network
+
+  # ───────────────────────────────────────────────────────────────────
+  # phpMyAdmin - Interface Web pour MySQL
+  # ───────────────────────────────────────────────────────────────────
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: ogan_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+      UPLOAD_LIMIT: 300M
+    ports:
+      - "8080:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ogan_network
+
+  # ───────────────────────────────────────────────────────────────────
+  # pgAdmin - Interface Web pour PostgreSQL - OPTIONNEL
+  # ───────────────────────────────────────────────────────────────────
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: ogan_pgadmin
+  #   restart: unless-stopped
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@ogan.local
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #     PGADMIN_CONFIG_SERVER_MODE: 'False'
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   volumes:
+  #     - pgadmin_data:/var/lib/pgadmin
+  #   networks:
+  #     - ogan_network
+
+# ─────────────────────────────────────────────────────────────────────
+# VOLUMES (Persistance des données)
+# ─────────────────────────────────────────────────────────────────────
+volumes:
+  mysql_data:
+    driver: local
+  # postgres_data:  # Décommenter si vous utilisez PostgreSQL
+  #   driver: local
+  # pgadmin_data:  # Décommenter si vous utilisez pgAdmin
+  #   driver: local
+
+# ─────────────────────────────────────────────────────────────────────
+# RÉSEAUX
+# ─────────────────────────────────────────────────────────────────────
+networks:
+  ogan_network:
+    driver: bridge
+

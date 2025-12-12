@@ -1,0 +1,43 @@
+# Dependencies
+/vendor/
+composer.lock
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Cookies (générés par curl, extensions navigateur, etc.)
+cookies.txt
+*.cookies
+
+# Cache et logs
+/var/cache/*
+/var/log/*
+!/var/cache/.gitkeep
+!/var/log/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+.phpunit.result.cache
+
+# Tailwind CLI
+tailwindcss-linux-x64
+tailwindcss-macos-arm64
+tailwindcss-windows-x64.exe
+tailwindcss
+
+# Assets compilés
+/public/assets/css/app.css
+node_modules/
+package-lock.json

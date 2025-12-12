@@ -1,0 +1,92 @@
+{{ extend('layouts/base') }}
+
+{{ start('body') }}
+<div
+	class="max-w-7xl mx-auto">
+	<!-- Header -->
+	<div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+		<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+			<h1 class="text-3xl font-bold text-gray-800">{{ title }}</h1>
+			<div class="flex flex-wrap gap-3">
+				{% if get('user_id') %}
+					<div class="flex items-center gap-2 text-gray-600">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+						</svg>
+						<span>Connecté en tant que :
+							<strong class="text-gray-800">{{ get('user_name') }}</strong>
+						</span>
+					</div>
+					<a href="{{ route('user_logout') }}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+						Déconnexion
+					</a>
+				{% else %}
+					<a href="{{ route('user_login') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+						Se connecter
+					</a>
+					<a href="{{ route('user_register') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+						S'inscrire
+					</a>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+
+	<!-- Users List -->
+	{% if empty(users) %}
+		<div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+			<div class="flex items-center">
+				<svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+				</svg>
+				<p class="text-blue-800">
+					Aucun utilisateur enregistré.
+					<a href="{{ route('user_register') }}" class="font-semibold underline">Créer le premier utilisateur</a>
+				</p>
+			</div>
+		</div>
+	{% else %}
+		<div class="bg-white rounded-xl shadow-lg overflow-hidden">
+			<div class="overflow-x-auto">
+				<table class="min-w-full divide-y divide-gray-200">
+					<thead class="bg-gray-50">
+						<tr>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Créé le</th>
+							<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+						</tr>
+					</thead>
+					<tbody class="bg-white divide-y divide-gray-200">
+						{% for user in users %}
+							<tr class="hover:bg-gray-50 transition-colors">
+								<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.getId }}</td>
+								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.getName ?? '' }}</td>
+								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ user.getEmail ?? '' }}</td>
+								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.getCreatedAt ? user.getCreatedAt.format('Y-m-d H:i:s') : 'N/A' }}</td>
+								<td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+									<div class="flex gap-2">
+										<a href="{{ route('user_show', ['id' => user.getId]) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors">
+											Voir
+										</a>
+										{% if get('user_id') == user.getId %}
+											<a href="{{ route('user_edit', ['id' => user.getId]) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs transition-colors">
+												Modifier
+											</a>
+											<form method="POST" action="{{ route('user_delete', ['id' => user.getId]) }}" class="inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+												<button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition-colors">
+													Supprimer
+												</button>
+											</form>
+										{% endif %}
+									</div>
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	{% endif %}
+</div>{{ end }}

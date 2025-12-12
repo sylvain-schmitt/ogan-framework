@@ -1,0 +1,47 @@
+{{ extend('layouts/base') }}
+
+{{ start('body') }}
+<div class="max-w-3xl mx-auto">
+	<h1 class="text-3xl font-bold text-gray-800 mb-6">{{ title }}</h1>
+
+	<div class="bg-white rounded-xl shadow-lg overflow-hidden">
+		<div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+			<h2 class="text-xl font-bold text-white">Informations de l'utilisateur</h2>
+		</div>
+		<div class="p-6">
+			<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+				<div>
+					<dt class="text-sm font-medium text-gray-500">ID</dt>
+					<dd class="mt-1 text-sm text-gray-900 font-semibold">{{ user.getId }}</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-gray-500">Nom</dt>
+					<dd class="mt-1 text-sm text-gray-900">{{ user.getName ?? '' }}</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-gray-500">Email</dt>
+					<dd class="mt-1 text-sm text-gray-900">{{ user.getEmail ?? '' }}</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-gray-500">Créé le</dt>
+					<dd class="mt-1 text-sm text-gray-900">{{ user.getCreatedAt ? user.getCreatedAt.format('Y-m-d H:i:s') : 'N/A' }}</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-gray-500">Modifié le</dt>
+					<dd class="mt-1 text-sm text-gray-900">{{ user.getUpdatedAt ? user.getUpdatedAt.format('Y-m-d H:i:s') : 'N/A' }}</dd>
+				</div>
+			</dl>
+
+			<div class="mt-6 flex gap-3">
+				<a href="{{ route('user_list') }}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+					Retour à la liste
+				</a>
+				{% if get('user_id') == user.getId %}
+					<a href="{{ route('user_edit', ['id' => user.getId]) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+						Modifier
+					</a>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>{{ end }}

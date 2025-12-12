@@ -1,0 +1,26 @@
+# Configuration des middlewares
+
+# Middlewares globaux (appliqués à toutes les routes)
+global:
+  - Ogan\Middleware\Examples\LoggerMiddleware
+
+# Middlewares par route
+routes:
+  test_cors:
+    - Ogan\Middleware\Examples\CorsMiddleware
+  
+  test_csrf:
+    - Ogan\Middleware\CsrfMiddleware
+  
+  test_ratelimit:
+    - class: Ogan\Middleware\RateLimitMiddleware
+      params:
+        limit: 2
+        window: 10
+
+# Middlewares par pattern d'URL (futur)
+# patterns:
+#   /admin/*:
+#     - Ogan\Middleware\Examples\AuthMiddleware
+#   /api/*:
+#     - Ogan\Middleware\Examples\CorsMiddleware

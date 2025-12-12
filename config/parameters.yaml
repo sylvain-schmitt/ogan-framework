@@ -1,0 +1,35 @@
+# Configuration Ogan Framework
+
+app:
+  env: '%env(APP_ENV)%'
+  debug: true
+
+view:
+  templates_path: '%kernel.project_dir%/templates'
+  default_layout: layouts/base.ogan
+  default_title: Mon site
+  use_compiler: true
+  cache_dir: '%kernel.project_dir%/var/cache/templates'
+
+router:
+  base_path: ''
+
+css_framework:
+  provider: tailwind
+  version: 4.1.18
+  cdn: false
+  custom_css: []
+
+tailwind:
+  input: assets/css/app.css
+  output: public/assets/css/app.css
+  minify: false
+
+session:
+  name: OGAN_SESSION
+  lifetime: 7200
+  path: /
+  domain: ''
+  secure: false
+  httponly: true
+  samesite: Lax

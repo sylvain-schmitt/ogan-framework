@@ -1,0 +1,41 @@
+# EditorConfig - Configuration pour le projet Ogan Framework
+# https://editorconfig.org
+
+root = true
+
+# Règles par défaut pour tous les fichiers
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Fichiers PHP
+[*.php]
+indent_size = 4
+
+# Templates Ogan (.ogan)
+[*.ogan]
+indent_style = space
+indent_size = 4
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Fichiers Markdown
+[*.md]
+trim_trailing_whitespace = false
+
+# Fichiers JSON
+[*.json]
+indent_size = 2
+
+# Fichiers YAML
+[*.{yml,yaml}]
+indent_size = 2
+
+# Makefiles
+[Makefile]
+indent_style = tab
