@@ -30,6 +30,8 @@ Thumbs.db
 
 # Tests
 .phpunit.result.cache
+/tests/
+phpunit.xml
 
 # Tailwind CLI
 tailwindcss-linux-x64
@@ -41,3 +43,7 @@ tailwindcss
 /public/assets/css/app.css
 node_modules/
 package-lock.json
+
+# Assets sources et config (à exclure du framework)
+/assets/
+tailwind.config.js
