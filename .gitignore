@@ -30,6 +30,7 @@ Thumbs.db
 
 # Tests
 .phpunit.result.cache
+.phpunit.cache
 /tests/
 phpunit.xml
 
