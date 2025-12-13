@@ -177,6 +177,11 @@ class Session implements SessionInterface
         session_regenerate_id(true);
     }
 
+    public function regenerate(): void
+    {
+        $this->migrate();
+    }
+
     public function getId(): string
     {
         $this->start();

@@ -253,6 +253,16 @@ class View implements ViewInterface
         return $this->viewHelper->js($path, $attributes);
     }
 
+    public function hasRoute(string $name): bool
+    {
+        return $this->viewHelper->hasRoute($name);
+    }
+
+    public function authInstalled(): bool
+    {
+        return $this->viewHelper->authInstalled();
+    }
+
     // SessionHelper
     public function setSession(\Ogan\Session\SessionInterface $session): void
     {

@@ -107,4 +107,29 @@ class ViewHelper
         }
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
+
+    /**
+     * Vérifie si une route existe
+     */
+    public function hasRoute(string $name): bool
+    {
+        if (!$this->router) {
+            return false;
+        }
+
+        try {
+            $this->router->generateUrl($name);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Vérifie si le composant auth est installé
+     */
+    public function authInstalled(): bool
+    {
+        return $this->hasRoute('security_login');
+    }
 }

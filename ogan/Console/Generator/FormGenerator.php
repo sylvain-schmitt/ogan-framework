@@ -93,7 +93,9 @@ class FormGenerator extends AbstractGenerator
         // Générer les champs selon les propriétés du modèle ou des champs d'exemple
         $fields = $this->generateFields($modelProperties);
         $usedTypes = $this->getUsedFieldTypes($modelProperties);
+        $usedConstraints = $this->getUsedConstraints($modelProperties);
         $imports = $this->generateImports($usedTypes);
+        $constraintImports = $this->generateConstraintImports($usedConstraints);
 
         return <<<PHP
 <?php
@@ -103,7 +105,7 @@ class FormGenerator extends AbstractGenerator
  * 📝 {$className} - Formulaire {$baseName}
  * ═══════════════════════════════════════════════════════════════════════
  * 
- * Ce FormType a été généré automatiquement.
+ * Ce FormType a été généré automatiquement avec contraintes de validation.
  * 
  * ═══════════════════════════════════════════════════════════════════════
  */
@@ -113,6 +115,7 @@ namespace App\\Form;
 use Ogan\\Form\\AbstractType;
 use Ogan\\Form\\FormBuilder;
 {$imports}
+{$constraintImports}
 
 class {$className} extends AbstractType
 {
@@ -126,7 +129,7 @@ class {$className} extends AbstractType
         \$builder
 {$fields}
             ->add('submit', SubmitType::class, [
-                'label' => 'Enregistrer',
+                'label' => 'Save',
                 'attr' => [
                     'class' => 'w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
                 ]
@@ -222,18 +225,80 @@ PHP;
      * GÉNÉRER UN CHAMP
      * ═══════════════════════════════════════════════════════════════════
      */
-    private function generateFieldCode(string $name, string $fieldType, string $label, bool $required): string
+    private function generateFieldCode(string $name, string $fieldType, string $label, bool $required, string $type = 'string'): string
     {
-        $placeholder = "Entrez {$label}";
+        $placeholder = "Enter {$label}";
+        $constraints = $this->generateConstraintsCode($name, $fieldType, $required, $type);
         
         return "            ->add('{$name}', {$fieldType}::class, [\n" .
                "                'label' => '{$label}',\n" .
-               "                'required' => " . ($required ? 'true' : 'false') . ",\n" .
+               "                'constraints' => [\n" .
+               $constraints .
+               "                ],\n" .
                "                'attr' => [\n" .
                "                    'placeholder' => '{$placeholder}',\n" .
                "                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'\n" .
                "                ]\n" .
                "            ])";
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * GÉNÉRER LE CODE DES CONTRAINTES
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    private function generateConstraintsCode(string $name, string $fieldType, bool $required, string $type): string
+    {
+        $constraints = [];
+        
+        if ($required) {
+            $constraints[] = "                    new Required(),";
+        }
+        
+        if ($fieldType === 'EmailType') {
+            $constraints[] = "                    new Email(),";
+        }
+        
+        return implode("\n", $constraints) . (empty($constraints) ? '' : "\n");
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * RÉCUPÉRER LES CONTRAINTES UTILISÉES
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    private function getUsedConstraints(?array $modelProperties): array
+    {
+        $constraints = ['Required'];
+        
+        if ($modelProperties && !empty($modelProperties)) {
+            foreach ($modelProperties as $prop) {
+                $name = $prop['name'];
+                $type = $this->improveTypeDetection($name, $prop['type'] ?? 'string');
+                
+                if ($type === 'email' && !in_array('Email', $constraints)) {
+                    $constraints[] = 'Email';
+                }
+            }
+        }
+        
+        return $constraints;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * GÉNÉRER LES IMPORTS DES CONTRAINTES
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    private function generateConstraintImports(array $constraints): string
+    {
+        $imports = [];
+        
+        foreach ($constraints as $constraint) {
+            $imports[] = "use Ogan\\Form\\Constraint\\{$constraint};";
+        }
+        
+        return implode("\n", array_unique($imports));
     }
 
     /**
@@ -244,10 +309,12 @@ PHP;
     private function generateExampleFields(): string
     {
         return "            ->add('name', TextType::class, [\n" .
-               "                'label' => 'Nom',\n" .
-               "                'required' => true,\n" .
+               "                'label' => 'Name',\n" .
+               "                'constraints' => [\n" .
+               "                    new Required(),\n" .
+               "                ],\n" .
                "                'attr' => [\n" .
-               "                    'placeholder' => 'Entrez le nom',\n" .
+               "                    'placeholder' => 'Enter name',\n" .
                "                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'\n" .
                "                ]\n" .
                "            ])";

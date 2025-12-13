@@ -215,7 +215,7 @@ class VariableTransformer
         $iteration = 0;
         while ($iteration < $maxIterations) {
             $newExpression = preg_replace_callback(
-                '/(?<!\$)(?<!##)\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|$|\)|,|;|\[|=>|==|!=|<=|>=|<|>|&&|\|\||and|or)/',
+                '/(?<!\$)(?<!##)\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|$|\)|,|;|\[|\]|=>|==|!=|<=|>=|<|>|&&|\|\||and|or)/',
                 function ($matches) use ($keywordChecker, $expression) {
                     $var = $matches[1];
                     $fullMatch = $matches[0];

@@ -57,8 +57,8 @@ class CheckboxType implements FieldTypeInterface
 
         $html .= '>';
 
-        // Label après la checkbox (convention HTML)
-        $html .= '<label for="' . htmlspecialchars($name) . '">';
+        // Label après la checkbox (convention HTML) avec espacement
+        $html .= '<label for="' . htmlspecialchars($name) . '" class="ml-2">';
         if ($required) {
             $html .= '<span class="required">*</span> ';
         }

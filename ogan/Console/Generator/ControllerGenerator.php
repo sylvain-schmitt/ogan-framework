@@ -107,7 +107,7 @@ class {$className} extends AbstractController
     {
         \$items = {$modelName}::all();
 
-        return \$this->render('{$routeName}/list.html.php', [
+        return \$this->render('{$routeName}/list.ogan', [
             'title' => 'Liste des {$routeName}s',
             'items' => \$items
         ]);
@@ -128,7 +128,7 @@ class {$className} extends AbstractController
             return \$this->redirect('/{$routeName}s');
         }
 
-        return \$this->render('{$routeName}/show.html.php', [
+        return \$this->render('{$routeName}/show.ogan', [
             'title' => 'Détails de {$routeName}',
             'item' => \$item
         ]);
@@ -147,7 +147,7 @@ class {$className} extends AbstractController
             'method' => 'POST'
         ]);
 
-        return \$this->render('{$routeName}/create.html.php', [
+        return \$this->render('{$routeName}/create.ogan', [
             'title' => 'Créer un {$routeName}',
             'form' => \$form->createView()
         ]);
@@ -180,7 +180,7 @@ class {$className} extends AbstractController
             return \$this->redirect('/{$routeName}s');
         }
 
-        return \$this->render('{$routeName}/create.html.php', [
+        return \$this->render('{$routeName}/create.ogan', [
             'title' => 'Créer un {$routeName}',
             'form' => \$form->createView()
         ]);
@@ -209,7 +209,7 @@ class {$className} extends AbstractController
         // TODO: Pré-remplir le formulaire avec les données de l'élément
         // Exemple: \$form->setData(['name' => \$item->getName()]);
 
-        return \$this->render('{$routeName}/edit.html.php', [
+        return \$this->render('{$routeName}/edit.ogan', [
             'title' => 'Éditer {$routeName}',
             'item' => \$item,
             'form' => \$form->createView()
@@ -249,7 +249,7 @@ class {$className} extends AbstractController
             return \$this->redirect('/{$routeName}s');
         }
 
-        return \$this->render('{$routeName}/edit.html.php', [
+        return \$this->render('{$routeName}/edit.ogan', [
             'title' => 'Éditer {$routeName}',
             'item' => \$item,
             'form' => \$form->createView()

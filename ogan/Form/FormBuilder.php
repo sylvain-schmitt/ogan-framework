@@ -157,42 +157,41 @@ class FormBuilder
      * VALIDER LE FORMULAIRE
      * ═══════════════════════════════════════════════════════════════════
      * 
+     * Uses the new constraint-based validation system.
+     * Constraints are defined in FormType fields via the 'constraints' option.
+     * 
      * ═══════════════════════════════════════════════════════════════════
      */
     private function validate(): void
     {
-        $rules = [];
+        $this->errors = [];
 
-        // Construire les règles de validation depuis les options des champs
         foreach ($this->fields as $name => $field) {
             $fieldOptions = $field['options'];
-            $fieldRules = [];
+            $value = $this->data[$name] ?? null;
 
-            if ($fieldOptions['required'] ?? false) {
-                $fieldRules[] = 'required';
-            }
+            // Get constraints from field options
+            $constraints = $fieldOptions['constraints'] ?? [];
 
-            // Règles spécifiques selon le type
-            $type = $field['type'];
-            if ($type === \Ogan\Form\Types\EmailType::class) {
-                $fieldRules[] = 'email';
-            }
+            // Execute each constraint
+            foreach ($constraints as $constraint) {
+                if (!$constraint instanceof \Ogan\Form\Constraint\ConstraintInterface) {
+                    continue;
+                }
 
-            if (isset($fieldOptions['min'])) {
-                $fieldRules[] = 'min:' . $fieldOptions['min'];
-            }
+                // Pass all form data as context (for cross-field validation like EqualTo)
+                $error = $constraint->validate($value, $this->data);
 
-            if (isset($fieldOptions['max'])) {
-                $fieldRules[] = 'max:' . $fieldOptions['max'];
-            }
-
-            if (!empty($fieldRules)) {
-                $rules[$name] = implode('|', $fieldRules);
+                if ($error !== null) {
+                    if (!isset($this->errors[$name])) {
+                        $this->errors[$name] = [];
+                    }
+                    $this->errors[$name][] = $error;
+                    break; // Stop at first error for this field
+                }
             }
         }
 
-        // Valider
-        $this->errors = $this->validator->validate($this->data, $rules);
         $this->valid = empty($this->errors);
     }
 

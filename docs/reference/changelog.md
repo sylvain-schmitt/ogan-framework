@@ -239,6 +239,54 @@ vendor/bin/phpunit tests/Unit   # Tests unitaires uniquement
 vendor/bin/phpunit tests/Integration  # Tests d'intégration uniquement
 ```
 
+### Phase 1.5 : Système de Formulaires avec Contraintes (TERMINÉE ✅ - 2025-12-13)
+- [x] **Système de contraintes pour les formulaires**
+  - `Required` : Champ obligatoire
+  - `Email` : Validation d'email
+  - `MinLength` / `MaxLength` : Longueur de chaîne
+  - `EqualTo` : Comparaison avec un autre champ
+  - `UniqueEntity` : Validation d'unicité en base de données
+- [x] Méthodes `isSubmitted()` et `isValid()` dans `FormBuilder`
+- [x] Validation centralisée dans les FormTypes
+- [x] Simplification des contrôleurs (logique de validation déplacée)
+- [x] Mise à jour de `make:auth` avec les nouvelles contraintes
+
+**Fichiers créés :**
+- `ogan/Form/Constraint/ConstraintInterface.php`
+- `ogan/Form/Constraint/Required.php`
+- `ogan/Form/Constraint/Email.php`
+- `ogan/Form/Constraint/MinLength.php`
+- `ogan/Form/Constraint/MaxLength.php`
+- `ogan/Form/Constraint/EqualTo.php`
+- `ogan/Form/Constraint/UniqueEntity.php`
+
+### Phase 1.6 : Authentification "Remember Me" (TERMINÉE ✅ - 2025-12-13)
+- [x] **Service RememberMeService** (`ogan/Security/RememberMeService.php`)
+  - Création de tokens sécurisés (SHA-256)
+  - Stockage en base de données
+  - Gestion des cookies (30 jours)
+  - Cleanup des tokens expirés
+- [x] **Middleware RememberMeMiddleware** (`ogan/Middleware/RememberMeMiddleware.php`)
+  - Auto-login via cookie
+  - Vérification du token à chaque requête
+- [x] **Migration `remember_tokens`** générée par `make:auth`
+- [x] **Intégration dans SecurityController** (login/logout avec remember me)
+- [x] Checkbox "Se souvenir de moi" dans `LoginFormType`
+- [x] Documentation mise à jour (`sessions-cookies.md`)
+
+**Sécurité :**
+- Tokens hashés SHA-256 en base de données
+- Cookies HttpOnly, SameSite=Lax
+- Expiration automatique après 30 jours
+- Suppression du token au logout
+
+### Phase 1.7 : Améliorations de `make:auth` (TERMINÉE ✅ - 2025-12-13)
+- [x] Correction de l'espacement checkbox/label (`ml-2` dans CheckboxType)
+- [x] Les migrations ne sont plus régénérées avec `--force`
+- [x] Suppression des tables inutilisées (`password_resets` retiré)
+- [x] Génération de la migration `remember_tokens`
+- [x] Génération des pages Dashboard et Profil utilisateur
+
 ---
 
 ## 📁 Structure Finale

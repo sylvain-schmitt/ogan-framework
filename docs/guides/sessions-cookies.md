@@ -18,12 +18,18 @@ Ogan Framework utilise les sessions PHP natives avec une configuration sécuris�
 - **Sécurité** : HttpOnly, SameSite=Lax
 - **Contenu** : ID de session PHP (ex: `gog3gonvtl9s5atddfn4dv383u`)
 
+**`remember_me`** (si fonctionnalité activée)
+- **Type** : Cookie de persistance
+- **Durée** : 30 jours
+- **Sécurité** : HttpOnly, SameSite=Lax, Secure (en production)
+- **Contenu** : Token SHA-256 pour auto-connexion
+- **Création** : Via `RememberMeService` lors du login avec checkbox cochée
+
 ### Cookies d'autres applications
 
 Les cookies suivants **ne sont PAS** créés par Ogan Framework :
 
 - **`pma_lang`** : Cookie de phpMyAdmin (interface MySQL)
-- **`remember_me`** / **`REMEMBERME`** : Cookies d'une autre application (peut-être Symfony ou une autre app)
 
 ---
 
@@ -246,7 +252,54 @@ session_start(); // Headers already sent!
 
 ---
 
-## 📚 Ressources
+## � Fonctionnalité "Remember Me"
+
+Le framework inclut une fonctionnalité "Se souvenir de moi" pour la connexion persistante.
+
+### Fonctionnement
+
+1. L'utilisateur coche "Se souvenir de moi" sur le formulaire de login
+2. Un token sécurisé (SHA-256) est généré et stocké en base de données
+3. Un cookie `remember_me` est créé avec ce token (30 jours)
+4. Le `RememberMeMiddleware` vérifie ce cookie à chaque requête
+5. Si le token est valide, l'utilisateur est auto-connecté
+
+### Services impliqués
+
+- **`Ogan\Security\RememberMeService`** : Création/validation des tokens
+- **`Ogan\Middleware\RememberMeMiddleware`** : Auto-login via cookie
+- **Table `remember_tokens`** : Stockage des tokens
+
+### Utilisation dans un contrôleur
+
+```php
+use Ogan\Security\RememberMeService;
+
+// Login avec Remember Me
+if ($data['remember_me']) {
+    $rememberMe = new RememberMeService();
+    $token = $rememberMe->createToken($user->getId());
+    $rememberMe->setCookie($token);
+}
+
+// Logout - supprimer le token
+$token = $rememberMe->getTokenFromCookie();
+if ($token) {
+    $rememberMe->deleteToken($token);
+    $rememberMe->clearCookie();
+}
+```
+
+### Sécurité
+
+- Tokens hashés en SHA-256 en base de données
+- Cookie HttpOnly (non accessible via JavaScript)
+- Cookie SameSite=Lax (protection CSRF)
+- Expiration automatique après 30 jours
+
+---
+
+## �📚 Ressources
 
 - [PHP Sessions](https://www.php.net/manual/fr/book.session.php)
 - [OWASP Session Management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)

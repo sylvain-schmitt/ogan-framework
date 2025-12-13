@@ -113,6 +113,20 @@ abstract class Model
                         // Si la conversion échoue, garder la valeur originale
                     }
                 }
+
+                // Gérer les tableaux JSON : vérifier si la propriété attend un array
+                $propertyName = lcfirst($camelKey);
+                if (is_string($value) && property_exists($this, $propertyName)) {
+                    $reflection = new \ReflectionProperty($this, $propertyName);
+                    $type = $reflection->getType();
+                    if ($type instanceof \ReflectionNamedType && $type->getName() === 'array') {
+                        $decoded = json_decode($value, true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            $value = $decoded;
+                        }
+                    }
+                }
+
                 $this->$setter($value);
             }
         }
@@ -142,6 +156,11 @@ abstract class Model
                 // Convertir les DateTime en string pour la base de données
                 if ($value instanceof \DateTime) {
                     $value = $value->format('Y-m-d H:i:s');
+                }
+
+                // Convertir les tableaux en JSON pour la base de données
+                if (is_array($value)) {
+                    $value = json_encode($value);
                 }
 
                 // Convertir camelCase en snake_case pour la base de données

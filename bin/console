@@ -52,5 +52,9 @@ registerMakeCommands($app);
 require $commandsDir . '/migrate.php';
 registerMigrateCommands($app);
 
+// Auth
+require $commandsDir . '/auth.php';
+registerAuthCommands($app);
+
 // Exécuter l'application
 $app->run($argv);

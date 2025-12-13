@@ -90,10 +90,9 @@ abstract class AbstractController
     /**
      * Redirection HTTP.
      */
-    protected function redirect(string $url, int $status = 302): void
+    protected function redirect(string $url, int $status = 302): Response
     {
-        header("Location: {$url}", true, $status);
-        exit;
+        return $this->response->redirect($url, $status);
     }
 
     /**
@@ -107,13 +106,14 @@ abstract class AbstractController
     /**
      * Rendu complet d’une page avec layout + bloc "body".
      */
-    protected function render(string $template, array $params = []): void
+    protected function render(string $template, array $params = []): Response
     {
         // Gestion du titre (celui du contrôleur > celui de config)
         $params['title'] = $params['title']
             ?? $this->config['view']['default_title'];
 
         // Avec le moteur de template avancé, la vue gère elle-même son layout via extend()
-        echo $this->view->render($template, $params);
+        $content = $this->view->render($template, $params);
+        return $this->response->setContent($content);
     }
 }

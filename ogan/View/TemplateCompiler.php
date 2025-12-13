@@ -9,6 +9,7 @@ use Ogan\View\Compiler\Utility\StringProtector;
 use Ogan\View\Compiler\Variable\VariableProtector;
 use Ogan\View\Compiler\Variable\VariableTransformer;
 use Ogan\View\Compiler\Syntax\DotSyntaxTransformer;
+use Ogan\View\Compiler\Syntax\FilterTransformer;
 use Ogan\View\Compiler\Expression\ExpressionParser;
 use Ogan\View\Compiler\Expression\ExpressionCompiler;
 use Ogan\View\Compiler\Control\ControlStructureCompiler;
@@ -30,6 +31,7 @@ use Ogan\View\Compiler\Control\ControlStructureCompiler;
  * route('name', array('id' => 1)) → <?= $this->route('name', array('id' => 1)) ?>
  * asset('path') → <?= $this->asset('path') ?>
  * component('name', array(...)) → <?= $this->component('name', array(...)) ?>
+ * variable|filter → filter(variable)
  * 
  * STRUCTURES DE CONTRÔLE :
  * ------------------------
@@ -81,10 +83,12 @@ class TemplateCompiler
             $stringProtector = new StringProtector($placeholderManager);
             $variableProtector = new VariableProtector($placeholderManager);
             $dotSyntaxTransformer = new DotSyntaxTransformer($placeholderManager);
+            $filterTransformer = new FilterTransformer($placeholderManager);
             $variableTransformer = new VariableTransformer($keywordChecker, $variableProtector, $placeholderManager, $stringProtector);
 
             $this->expressionParser = new ExpressionParser(
                 $dotSyntaxTransformer,
+                $filterTransformer,
                 $variableTransformer,
                 $stringProtector,
                 $placeholderManager

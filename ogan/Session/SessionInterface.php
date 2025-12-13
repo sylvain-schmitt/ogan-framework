@@ -86,6 +86,11 @@ interface SessionInterface
     public function migrate(): void;
 
     /**
+     * Alias de migrate() - Régénère l'ID de session
+     */
+    public function regenerate(): void;
+
+    /**
      * Récupère l'ID actuel
      */
     public function getId(): string;

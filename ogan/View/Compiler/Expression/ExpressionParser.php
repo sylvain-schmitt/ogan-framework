@@ -3,6 +3,7 @@
 namespace Ogan\View\Compiler\Expression;
 
 use Ogan\View\Compiler\Syntax\DotSyntaxTransformer;
+use Ogan\View\Compiler\Syntax\FilterTransformer;
 use Ogan\View\Compiler\Variable\VariableTransformer;
 use Ogan\View\Compiler\Utility\PlaceholderManager;
 use Ogan\View\Compiler\Utility\StringProtector;
@@ -19,17 +20,20 @@ use Ogan\View\Compiler\Utility\StringProtector;
 class ExpressionParser
 {
     private DotSyntaxTransformer $dotSyntaxTransformer;
+    private FilterTransformer $filterTransformer;
     private VariableTransformer $variableTransformer;
     private StringProtector $stringProtector;
     private PlaceholderManager $placeholderManager;
 
     public function __construct(
         DotSyntaxTransformer $dotSyntaxTransformer,
+        FilterTransformer $filterTransformer,
         VariableTransformer $variableTransformer,
         StringProtector $stringProtector,
         PlaceholderManager $placeholderManager
     ) {
         $this->dotSyntaxTransformer = $dotSyntaxTransformer;
+        $this->filterTransformer = $filterTransformer;
         $this->variableTransformer = $variableTransformer;
         $this->stringProtector = $stringProtector;
         $this->placeholderManager = $placeholderManager;
@@ -53,6 +57,11 @@ class ExpressionParser
         if (preg_match('/^\$/', $expression)) {
             return $expression;
         }
+
+        // ÉTAPE 1 : Transformer les filtres (pipes)
+        // Exemple: val|upper → strtoupper(val)
+        // On le fait au début pour que les transformations suivantes s'appliquent au résultat
+        $expression = $this->filterTransformer->transform($expression);
 
         // ÉTAPE 2 : Gérer les appels de fonctions (section, route, component, etc.)
         // Ces fonctions doivent être transformées en $this->functionName(...)

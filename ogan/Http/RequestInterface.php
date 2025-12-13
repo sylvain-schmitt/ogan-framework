@@ -246,6 +246,28 @@ interface RequestInterface
      * @return array Tableau associatif [nom => valeur]
      */
     public function getHeaders(): array;
+
+    /**
+     * ───────────────────────────────────────────────────────────────────────
+     * RÉCUPÉRER UN FICHIER UPLOADÉ
+     * ───────────────────────────────────────────────────────────────────────
+     * 
+     * Récupère les informations d'un fichier uploadé via un formulaire.
+     * 
+     * EXEMPLE :
+     * Formulaire HTML :
+     * <form method="POST" enctype="multipart/form-data">
+     *   <input type="file" name="avatar">
+     * </form>
+     * 
+     * Code PHP :
+     * $file = $request->getFile('avatar');
+     * // ['name' => 'photo.jpg', 'type' => 'image/jpeg', 'tmp_name' => '/tmp/...', ...]
+     * 
+     * @param string $key Nom du champ fichier
+     * @return array|null Les infos du fichier ou null si absent
+     */
+    public function getFile(string $key): ?array;
 }
 
 /**

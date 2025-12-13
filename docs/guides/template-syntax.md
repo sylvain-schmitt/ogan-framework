@@ -163,10 +163,102 @@ Pour afficher du HTML brut (attention aux risques XSS) :
 </html>
 ```
 
+---
+
+## 🏗️ Héritage de Templates
+
+Le système supporte l'héritage de templates (layouts) avec les directives `extend()`, `start()` et `end`.
+
+### Syntaxe d'héritage
+
+Pour qu'un template hérite d'un layout, utilisez `{{ extend('chemin/du/layout') }}` :
+
+```html
+{{ extend('layouts/base.ogan') }}
+
+{{ start('body') }}
+<div class="content">
+    <h1>{{ title }}</h1>
+    <p>Contenu de ma page</p>
+</div>
+{{ end }}
+```
+
+### Le layout parent
+
+Le layout parent définit la structure HTML et utilise `{{ section('body') }}` pour afficher les blocs enfants :
+
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
+</head>
+<body>
+    {{ component('navbar') }}
+    
+    <main class="container">
+        {{ component('flashes') }}
+        {{ section('body') }}
+    </main>
+    
+    {{ component('footer') }}
+</body>
+</html>
+```
+
+### Directives d'héritage
+
+| Directive | Usage | Description |
+|-----------|-------|-------------|
+| `{{ extend('path') }}` | Template enfant | Définit le layout parent à utiliser |
+| `{{ start('name') }}` | Template enfant | Commence un bloc nommé |
+| `{{ end }}` | Template enfant | Termine le bloc en cours |
+| `{{ section('name') }}` | Layout parent | Affiche le contenu du bloc nommé |
+
+> **⚠️ Important** : `extend()` doit toujours utiliser des **parenthèses** autour du chemin du layout. La syntaxe `{{ extend 'path' }}` sans parenthèses ne fonctionne pas.
+
+### Exemple complet
+
+**Layout** (`templates/layouts/base.ogan`) :
+```html
+{{ title = title ?? 'Mon site' }}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+</head>
+<body>
+    {{ section('body') }}
+</body>
+</html>
+```
+
+**Page** (`templates/home/index.ogan`) :
+```html
+{{ extend('layouts/base.ogan') }}
+
+{{ start('body') }}
+<div class="hero">
+    <h1>Bienvenue sur {{ title }}</h1>
+</div>
+{{ end }}
+```
+
+---
+
 ## 🔧 Méthodes Supportées
 
 Les méthodes suivantes peuvent être utilisées avec la syntaxe `{{ }}` :
 
+**Héritage de templates :**
+- `extend('layout')` - Définit le layout parent (doit être en première ligne)
+- `start('name')` - Commence un bloc nommé
+- `end` - Termine le bloc en cours
+
+**Affichage :**
 - `section('name')` - Affiche une section (retourne du HTML, **non échappée**)
 - `component('name', ['prop' => 'value'])` - Affiche un composant (retourne du HTML, **non échappée**)
 - `route('name', ['param' => 'value'])` - Génère une URL depuis un nom de route
@@ -177,6 +269,7 @@ Les méthodes suivantes peuvent être utilisées avec la syntaxe `{{ }}` :
 - `cssFramework()` - Génère les balises du framework CSS configuré (retourne du HTML, **non échappée**)
 - `csrf_token()` - Retourne le token CSRF
 - `csrf_input()` - Génère un champ caché avec le token CSRF (retourne du HTML, **non échappée**)
+
 
 ### 🤔 Pourquoi certaines méthodes ne sont pas échappées ?
 
@@ -352,37 +445,36 @@ Les composants sont automatiquement compilés :
 
 5. **Compatibilité** : L'ancienne syntaxe PHP (`<?= $this->e($variable) ?>`) continue de fonctionner. Vous pouvez mélanger les deux syntaxes si nécessaire.
 
-6. **Structures de contrôle** : Vous pouvez maintenant utiliser la syntaxe `{{ }}` pour les structures de contrôle PHP :
+6. **Structures de contrôle** : Les structures de contrôle utilisent la syntaxe `{% %}` (pas `{{ }}`) :
 
 ```html
-{{ if (isset($users)): }}
-    {{ foreach ($users as $user): }}
-        <div>{{ user.name }}</div>
-    {{ endforeach; }}
-{{ endif; }}
+{% if user %}
+    {% for item in items %}
+        <div>{{ item.name }}</div>
+    {% endfor %}
+{% endif %}
 ```
 
 **Structures supportées :**
-- `{{ if (condition): }}` ... `{{ endif; }}`
-- `{{ elseif (condition): }}`
-- `{{ else: }}`
-- `{{ foreach ($items as $item): }}` ... `{{ endforeach; }}`
-- `{{ while (condition): }}` ... `{{ endwhile; }}`
-- `{{ for ($i = 0; $i < 10; $i++): }}` ... `{{ endfor; }}`
+- `{% if condition %}` ... `{% endif %}`
+- `{% elseif condition %}`
+- `{% else %}`
+- `{% for item in items %}` ... `{% endfor %}`
+- `{% for key, value in items %}` ... `{% endfor %}`
 
 **Exemples :**
 ```html
-{{ if (isset($user_count) && $user_count > 0): }}
-    <p>{{ $user_count }} utilisateur(s)</p>
-{{ elseif ($user_count === 0): }}
+{% if user_count > 0 %}
+    <p>{{ user_count }} utilisateur(s)</p>
+{% elseif user_count == 0 %}
     <p>Aucun utilisateur</p>
-{{ else: }}
+{% else %}
     <p>Nombre inconnu</p>
-{{ endif; }}
+{% endif %}
 
-{{ foreach ($features as $feature): }}
-    {{ component('card', ['title' => $feature['title']]) }}
-{{ endforeach; }}
+{% for feature in features %}
+    {{ component('card', ['title' => feature.title]) }}
+{% endfor %}
 ```
 
 **Note** : Vous pouvez toujours utiliser du PHP natif si vous préférez :
@@ -418,6 +510,11 @@ Pour migrer un template existant :
 4. Remplacer `<?= $this->route('name') ?>` par `{{ route('name') }}`
 5. Remplacer les routes hardcodées par `{{ route('nom_route') }}`
 6. Remplacer `{{ foreach (items as item) }}` par `{% for item in items %}`
+7. **Héritage** : Remplacer `<?php $this->layout('...'); ?>` par `{{ extend('...') }}`
+8. **Blocs** : Remplacer `<?php $this->start('body'); ?>` par `{{ start('body') }}`
+9. **Fin de bloc** : Remplacer `<?php $this->end(); ?>` par `{{ end }}`
+
+> **⚠️ Important** : La syntaxe `{{ extend('path') }}` requiert des **parenthèses**. `{{ extend 'path' }}` sans parenthèses ne fonctionne pas.
 
 ---
 

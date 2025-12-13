@@ -1,6 +1,6 @@
 {{ title = title ?? 'Mon site' }}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="h-full">
 
 	<head>
 		<meta charset="UTF-8">
@@ -8,15 +8,14 @@
 		<title>{{ title }}</title>
 
 		<!-- Tailwind CSS compilé -->
-		<link
-		rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
+		<link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
 	</head>
 
-	<body class="bg-gray-50">
+	<body class="min-h-screen flex flex-col bg-gray-50">
 
 		{{ component('navbar') }}
 
-		<main class="container mx-auto px-4 py-8">
+		<main class="flex-1">
 			{{ component('flashes') }}
 			{{ section('body') }}
 		</main>

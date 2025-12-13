@@ -2,6 +2,7 @@
 
 # Middlewares globaux (appliqués à toutes les routes)
 global:
+  - Ogan\Middleware\RememberMeMiddleware
   - Ogan\Middleware\Examples\LoggerMiddleware
 
 # Middlewares par route
