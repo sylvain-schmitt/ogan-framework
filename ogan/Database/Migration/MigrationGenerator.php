@@ -55,7 +55,7 @@ class MigrationGenerator
      * 
      * ═══════════════════════════════════════════════════════════════════
      */
-    public function generateFromModel(string $modelClass, string $migrationsPath, bool $force = false): string
+    public function generateFromModel(string $modelClass, string $migrationsPath, bool $force = false, ?\PDO $pdo = null): string
     {
         // Vérifier que la classe existe
         if (!class_exists($modelClass)) {
@@ -70,6 +70,16 @@ class MigrationGenerator
 
         // Récupérer le nom de la table
         $tableName = $this->getTableName($modelClass);
+        
+        // Si une connexion PDO est fournie, vérifier si la table existe déjà
+        if ($pdo !== null) {
+            $analyzer = new SchemaAnalyzer($pdo);
+            
+            if ($analyzer->tableExists($tableName)) {
+                // La table existe, générer une migration ALTER TABLE si des changements sont détectés
+                return $this->generateAlterFromModel($modelClass, $migrationsPath, $pdo, $force);
+            }
+        }
         
         // Analyser les propriétés du modèle
         $properties = $this->analyzeModelProperties($reflection);
@@ -106,6 +116,119 @@ class MigrationGenerator
         }
 
         return $filepath;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * GÉNÉRER UNE MIGRATION ALTER TABLE DEPUIS UN MODÈLE
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * Compare le schéma de la base de données avec le modèle PHP et génère
+     * une migration ALTER TABLE si des différences sont détectées.
+     * 
+     * @param string $modelClass Nom complet de la classe du modèle
+     * @param string $migrationsPath Chemin vers le dossier des migrations
+     * @param \PDO $pdo Connexion à la base de données
+     * @param bool $force Forcer la création même si aucun changement
+     * @return string Chemin du fichier de migration créé ou message
+     * @throws \RuntimeException Si le modèle n'existe pas
+     * 
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function generateAlterFromModel(string $modelClass, string $migrationsPath, \PDO $pdo, bool $force = false): string
+    {
+        // Vérifier que la classe existe
+        if (!class_exists($modelClass)) {
+            throw new \RuntimeException("La classe {$modelClass} n'existe pas.");
+        }
+
+        // Charger la classe et vérifier qu'elle étend Model
+        $reflection = new ReflectionClass($modelClass);
+        if (!$reflection->isSubclassOf(\Ogan\Database\Model::class)) {
+            throw new \RuntimeException("La classe {$modelClass} doit étendre Ogan\\Database\\Model.");
+        }
+
+        // Récupérer le nom de la table
+        $tableName = $this->getTableName($modelClass);
+        
+        // Analyser les schémas
+        $analyzer = new SchemaAnalyzer($pdo);
+        
+        // Vérifier que la table existe
+        if (!$analyzer->tableExists($tableName)) {
+            // La table n'existe pas, générer une migration CREATE TABLE
+            return $this->generateFromModel($modelClass, $migrationsPath, $force);
+        }
+        
+        // Récupérer les différences
+        $diff = $analyzer->getDiff($modelClass, $tableName);
+        
+        // Vérifier s'il y a des changements
+        if (empty($diff['added']) && empty($diff['dropped']) && empty($diff['modified'])) {
+            if (!$force) {
+                throw new \RuntimeException("Aucun changement détecté pour le modèle {$modelClass}.");
+            }
+        }
+        
+        // Récupérer le schéma actuel pour SQLite
+        $currentSchema = $analyzer->getTableSchema($tableName);
+        
+        // Générer la migration ALTER TABLE
+        $generator = new AlterTableGenerator();
+        [$className, $content, $timestamp] = $generator->generateMigrationContent($tableName, $diff, $currentSchema);
+        
+        // Créer le fichier
+        $filename = "{$timestamp}_alter_{$this->camelToSnake(substr($modelClass, strrpos($modelClass, '\\') + 1))}_table.php";
+        $filepath = rtrim($migrationsPath, '/') . '/' . $filename;
+        
+        // Vérifier si le fichier existe déjà
+        if (file_exists($filepath) && !$force) {
+            throw new \RuntimeException("Le fichier de migration existe déjà : {$filename}");
+        }
+        
+        // Créer le dossier s'il n'existe pas
+        if (!is_dir($migrationsPath)) {
+            mkdir($migrationsPath, 0755, true);
+        }
+        
+        // Écrire le fichier
+        file_put_contents($filepath, $content);
+        clearstatcache(true, $filepath);
+        
+        if (!file_exists($filepath)) {
+            throw new \RuntimeException("Impossible de créer le fichier de migration : {$filepath}");
+        }
+        
+        return $filepath;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * OBTENIR LES DIFFÉRENCES ENTRE UN MODÈLE ET SA TABLE
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * @param string $modelClass Classe du modèle
+     * @param \PDO $pdo Connexion à la base de données
+     * @return array Différences [added, dropped, modified, table_exists]
+     */
+    public function getDiff(string $modelClass, \PDO $pdo): array
+    {
+        $tableName = $this->getTableName($modelClass);
+        $analyzer = new SchemaAnalyzer($pdo);
+        
+        if (!$analyzer->tableExists($tableName)) {
+            return [
+                'table_exists' => false,
+                'added' => [],
+                'dropped' => [],
+                'modified' => []
+            ];
+        }
+        
+        $diff = $analyzer->getDiff($modelClass, $tableName);
+        $diff['table_exists'] = true;
+        
+        return $diff;
     }
 
     /**

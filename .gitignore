@@ -48,3 +48,12 @@ package-lock.json
 # Assets sources et config (à exclure du framework)
 /assets/
 tailwind.config.js
+
+# Database - Migrations générées localement
+/database/migrations/*.php
+!/database/migrations/README.md
+
+# Database - Base SQLite locale
+/var/db/
+*.db
+*.sqlite

@@ -53,6 +53,11 @@ class User extends Model
     private ?string $password = null;
 
     /**
+     * @var string|null Numéro de téléphone
+     */
+    private ?string $phone = null;
+
+    /**
      * @var \DateTime|null Date de création
      */
     private ?\DateTime $createdAt = null;

@@ -94,10 +94,102 @@ function registerMigrateCommands($app) {
         return 0;
     }, 'Affiche le statut des migrations');
 
+    // migrate:diff - Affiche les différences entre modèles et tables
+    $app->addCommand('migrate:diff', function($args) use ($modelsPath) {
+        try {
+            $pdo = Database::getConnection();
+        } catch (\Exception $e) {
+            echo "❌ Erreur de connexion : " . $e->getMessage() . "\n";
+            return 1;
+        }
+        
+        $modelInput = $args[0] ?? null;
+        
+        echo "🔍 Analyse des différences entre modèles et base de données...\n\n";
+        
+        $generator = new MigrationGenerator();
+        
+        if ($modelInput) {
+            // Un seul modèle
+            if (!str_contains($modelInput, '\\')) {
+                $modelClass = findModelClass($modelInput, $modelsPath);
+                if (!$modelClass) {
+                    echo "❌ Modèle '{$modelInput}' non trouvé\n";
+                    return 1;
+                }
+            } else {
+                $modelClass = $modelInput;
+            }
+            
+            $models = [$modelClass];
+        } else {
+            // Tous les modèles
+            $models = [];
+            if (is_dir($modelsPath)) {
+                foreach (glob($modelsPath . '/*.php') as $file) {
+                    $content = file_get_contents($file);
+                    if (preg_match('/namespace\s+([^;]+);/', $content, $nsMatch) &&
+                        preg_match('/class\s+(\w+)/', $content, $classMatch)) {
+                        $fullClass = $nsMatch[1] . '\\' . $classMatch[1];
+                        if (class_exists($fullClass) && is_subclass_of($fullClass, \Ogan\Database\Model::class)) {
+                            $models[] = $fullClass;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (empty($models)) {
+            echo "ℹ️  Aucun modèle trouvé.\n";
+            return 0;
+        }
+        
+        foreach ($models as $modelClass) {
+            $shortName = substr($modelClass, strrpos($modelClass, '\\') + 1);
+            echo "📊 {$shortName}\n";
+            echo str_repeat('─', 50) . "\n";
+            
+            try {
+                $diff = $generator->getDiff($modelClass, $pdo);
+                
+                if (!$diff['table_exists']) {
+                    echo "   ⚠️  Table n'existe pas → CREATE TABLE sera généré\n";
+                } else {
+                    if (empty($diff['added']) && empty($diff['dropped']) && empty($diff['modified'])) {
+                        echo "   ✅ Aucune différence\n";
+                    } else {
+                        foreach ($diff['added'] as $col => $def) {
+                            echo "   ➕ Ajout: {$col} ({$def['type']})\n";
+                        }
+                        foreach ($diff['dropped'] as $col => $def) {
+                            echo "   ➖ Suppression: {$col}\n";
+                        }
+                        foreach ($diff['modified'] as $col => $change) {
+                            echo "   🔄 Modification: {$col} ({$change['from']['type']} → {$change['to']['type']})\n";
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                echo "   ❌ Erreur: " . $e->getMessage() . "\n";
+            }
+            
+            echo "\n";
+        }
+        
+        return 0;
+    }, 'Affiche les différences entre modèles et tables');
+
     // migrate:make
     $app->addCommand('migrate:make', function($args) use ($migrationsPath, $modelsPath) {
         $modelInput = $args[0] ?? null;
         $force = in_array('--force', $args);
+        
+        // Connexion à la base pour détecter les tables existantes
+        try {
+            $pdo = Database::getConnection();
+        } catch (\Exception $e) {
+            $pdo = null; // Pas de connexion, on génère CREATE TABLE par défaut
+        }
         
         if (!$modelInput) {
             // Scanner tous les modèles
@@ -134,7 +226,7 @@ function registerMigrateCommands($app) {
             
             try {
                 $generator = new MigrationGenerator();
-                $filepath = $generator->generateFromModel($modelClass, $migrationsPath, $force);
+                $filepath = $generator->generateFromModel($modelClass, $migrationsPath, $force, $pdo);
                 
                 echo "✅ Migration générée : " . basename($filepath) . "\n";
                 echo "📁 Fichier : {$filepath}\n";
@@ -145,7 +237,7 @@ function registerMigrateCommands($app) {
         }
         
         return 0;
-    }, 'Génère une migration depuis un modèle');
+    }, 'Génère une migration depuis un modèle (détecte ALTER TABLE automatiquement)');
 }
 
 /**
