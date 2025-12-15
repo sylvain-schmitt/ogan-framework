@@ -26,6 +26,8 @@
 namespace Ogan\Form;
 
 use Ogan\Validation\Validator;
+use Ogan\Form\Types\CsrfType;
+use Ogan\Security\CsrfTokenManager;
 
 class FormBuilder
 {
@@ -75,6 +77,16 @@ class FormBuilder
     private Validator $validator;
 
     /**
+     * @var bool CSRF protection enabled
+     */
+    private bool $csrfEnabled = true;
+
+    /**
+     * @var string CSRF token identifier
+     */
+    private string $csrfTokenId = 'form';
+
+    /**
      * ═══════════════════════════════════════════════════════════════════
      * CONSTRUCTEUR
      * ═══════════════════════════════════════════════════════════════════
@@ -82,6 +94,36 @@ class FormBuilder
     public function __construct(?Validator $validator = null)
     {
         $this->validator = $validator ?? new Validator();
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * ACTIVER/DÉSACTIVER LA PROTECTION CSRF
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function enableCsrf(bool $enabled = true, ?string $tokenId = null): self
+    {
+        $this->csrfEnabled = $enabled;
+        if ($tokenId !== null) {
+            $this->csrfTokenId = $tokenId;
+        }
+        return $this;
+    }
+
+    /**
+     * Check if CSRF is enabled
+     */
+    public function isCsrfEnabled(): bool
+    {
+        return $this->csrfEnabled;
+    }
+
+    /**
+     * Get CSRF token ID
+     */
+    public function getCsrfTokenId(): string
+    {
+        return $this->csrfTokenId;
     }
 
     /**
@@ -143,6 +185,18 @@ class FormBuilder
                 $this->data[$name] = $request->getFile($name);
             } else {
                 $this->data[$name] = $request->post($name, '');
+            }
+        }
+
+        // Validate CSRF token first
+        if ($this->csrfEnabled) {
+            $csrfToken = $request->post('_csrf_token', '');
+            $csrfManager = new CsrfTokenManager();
+            
+            if (!$csrfManager->isTokenValid($this->csrfTokenId, $csrfToken)) {
+                $this->errors['_csrf_token'] = ['Token CSRF invalide. Veuillez réessayer.'];
+                $this->valid = false;
+                return $this;
             }
         }
 
@@ -315,6 +369,13 @@ class FormBuilder
      */
     public function createView(): FormView
     {
+        // Add CSRF field if enabled and not already present
+        if ($this->csrfEnabled && !isset($this->fields['_csrf_token'])) {
+            $this->add('_csrf_token', CsrfType::class, [
+                'token_id' => $this->csrfTokenId
+            ]);
+        }
+        
         return new FormView($this);
     }
 }

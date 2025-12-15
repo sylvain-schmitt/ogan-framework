@@ -110,8 +110,13 @@ class YamlParser
     {
         $value = trim($value);
 
+        // D'abord, enlever les guillemets si présents
+        if (preg_match('/^["\'](.*)["\']\s*$/', $value, $matches)) {
+            $value = $matches[1];
+        }
+
         // Variables d'environnement : %env(VAR)%
-        if (preg_match('/^%env\(([A-Z_]+)\)%$/', $value, $matches)) {
+        if (preg_match('/^%env\(([A-Z0-9_]+)\)%$/', $value, $matches)) {
             return $_ENV[$matches[1]] ?? getenv($matches[1]) ?: null;
         }
         
@@ -138,12 +143,7 @@ class YamlParser
             return str_contains($value, '.') ? (float)$value : (int)$value;
         }
 
-        // Chaînes entre guillemets
-        if (preg_match('/^["\'](.*)["\']\s*$/', $value, $matches)) {
-            return $matches[1];
-        }
-
-        // Chaîne simple
+        // Chaîne simple (guillemets déjà enlevés plus haut)
         return $value;
     }
 

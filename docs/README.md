@@ -7,6 +7,8 @@ Bienvenue dans la documentation complète du framework Ogan.
 - **[Guide Pédagogique](guides/pedagogique.md)** - Explication détaillée de chaque composant du framework
 - **[Installation](guides/installation.md)** - Guide d'installation et de configuration
 - **[Configuration](guides/configuration.md)** - Guide complet de configuration (.env vs parameters.php)
+- **[Authentification](guides/authentication.md)** - Système d'authentification complet (`make:auth`)
+- **[Génération de Code](guides/code-generation.md)** - Générateurs de code (controllers, forms, models)
 - **[Syntaxe des Templates](guides/template-syntax.md)** - Guide complet de la syntaxe `{{ }}` (style Twig/Blade)
 - **[Docker](guides/docker.md)** - Démarrage rapide avec Docker (MySQL, PostgreSQL)
 - **[Explications](guides/explications.md)** - Explications détaillées (ORM, .env, cookies.txt, etc.)

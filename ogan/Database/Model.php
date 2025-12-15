@@ -366,7 +366,11 @@ abstract class Model
      */
     protected function insert(): bool
     {
-        $id = QueryBuilder::table(static::getTableName())->insert($this->attributes);
+        // Remove 'exists' from attributes as it's not a DB column
+        $data = $this->attributes;
+        unset($data['exists']);
+        
+        $id = QueryBuilder::table(static::getTableName())->insert($data);
 
         if ($id > 0) {
             $this->attributes[static::$primaryKey] = $id;
@@ -407,9 +411,10 @@ abstract class Model
             $this->syncAttributesFromProperties();
         }
 
-        // Exclure la clé primaire des données à mettre à jour
+        // Exclure la clé primaire et 'exists' des données à mettre à jour
         $data = $this->attributes;
         unset($data[$primaryKey]);
+        unset($data['exists']);
 
         $affected = QueryBuilder::table(static::getTableName())
             ->where($primaryKey, '=', $id)
@@ -485,6 +490,11 @@ abstract class Model
      */
     public function __set(string $name, mixed $value): void
     {
+        // 'exists' is a Model property, not a DB attribute
+        if ($name === 'exists') {
+            $this->exists = (bool) $value;
+            return;
+        }
         $this->attributes[$name] = $value;
     }
 

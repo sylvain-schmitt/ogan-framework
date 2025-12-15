@@ -33,3 +33,19 @@ session:
   secure: false
   httponly: true
   samesite: Lax
+
+# Configuration de l'authentification
+auth:
+  # Envoyer un email de vérification à l'inscription
+  send_verification_email: false
+  # Envoyer un email pour le reset de mot de passe
+  send_password_reset_email: false
+  # Redirections après login/logout
+  login_redirect: /dashboard
+  logout_redirect: /login
+
+# Configuration des emails
+mail:
+  dsn: '%env(MAILER_DSN)%'
+  from: '%env(MAIL_FROM)%'
+  from_name: '%env(MAIL_FROM_NAME)%'
