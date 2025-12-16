@@ -116,4 +116,71 @@ abstract class AbstractController
         $content = $this->view->render($template, $params);
         return $this->response->setContent($content);
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 🔐 MÉTHODES DE SÉCURITÉ / AUTORISATION
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Récupère l'utilisateur actuellement connecté
+     */
+    protected function getUser(): ?\Ogan\Security\UserInterface
+    {
+        if (!$this->session) {
+            return null;
+        }
+
+        $userId = $this->session->get('_auth_user_id');
+        if (!$userId) {
+            return null;
+        }
+
+        // Chercher l'utilisateur via la classe configurée
+        $userClass = \Ogan\Config\Config::get('auth.user_class', 'App\\Model\\User');
+        if (class_exists($userClass) && method_exists($userClass, 'find')) {
+            return $userClass::find($userId);
+        }
+
+        return null;
+    }
+
+    /**
+     * Vérifie si l'utilisateur courant a une permission
+     * 
+     * @param string $attribute L'attribut à vérifier (ex: 'ROLE_ADMIN', 'edit')
+     * @param mixed $subject Le sujet optionnel (ex: instance Post)
+     * @return bool true si autorisé
+     */
+    protected function isGranted(string $attribute, mixed $subject = null): bool
+    {
+        $user = $this->getUser();
+        $checker = new \Ogan\Security\Authorization\AuthorizationChecker($user);
+        return $checker->isGranted($attribute, $subject);
+    }
+
+    /**
+     * Refuse l'accès si l'utilisateur n'a pas la permission
+     * 
+     * @param string $attribute L'attribut à vérifier
+     * @param mixed $subject Le sujet optionnel
+     * @param string $message Message d'erreur
+     * @throws \Ogan\Security\Authorization\AccessDeniedException
+     */
+    protected function denyAccessUnlessGranted(string $attribute, mixed $subject = null, string $message = 'Access Denied.'): void
+    {
+        if (!$this->isGranted($attribute, $subject)) {
+            throw new \Ogan\Security\Authorization\AccessDeniedException($message);
+        }
+    }
+
+    /**
+     * Crée une réponse "Access Denied" (403)
+     */
+    protected function accessDenied(string $message = 'Access Denied.'): Response
+    {
+        return $this->response
+            ->setStatusCode(403)
+            ->setContent($this->view->render('errors/403.ogan', ['message' => $message]));
+    }
 }
+

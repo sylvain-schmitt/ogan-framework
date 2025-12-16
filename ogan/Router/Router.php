@@ -278,6 +278,20 @@ class Router implements RouterInterface
                         $controller->setRequestResponse($request, new \Ogan\Http\Response(), $container);
                     }
 
+                    // ─────────────────────────────────────────────────────────
+                    // VÉRIFICATION DES ATTRIBUTS #[IsGranted]
+                    // ─────────────────────────────────────────────────────────
+                    $accessDenied = $this->checkIsGrantedAttributes(
+                        $route->controllerClass,
+                        $route->controllerMethod,
+                        $params,
+                        $request
+                    );
+                    
+                    if ($accessDenied !== null) {
+                        return $accessDenied;
+                    }
+
                     // Appel de la méthode avec les params extraits
                     $result = call_user_func_array([$controller, $route->controllerMethod], $params);
                     
@@ -360,4 +374,107 @@ class Router implements RouterInterface
     {
         return $this->routes;
     }
+
+    /**
+     * Vérifie les attributs #[IsGranted] sur la classe et la méthode du contrôleur
+     * 
+     * @return ResponseInterface|null null si autorisé, Response de redirection sinon
+     */
+    private function checkIsGrantedAttributes(
+        string $controllerClass,
+        string $methodName,
+        array $params,
+        RequestInterface $request
+    ): ?ResponseInterface {
+        // Vérifier si l'attribut existe
+        if (!class_exists(\Ogan\Security\Attribute\IsGranted::class)) {
+            return null;
+        }
+
+        $refClass = new ReflectionClass($controllerClass);
+        $refMethod = $refClass->getMethod($methodName);
+
+        // Collecter les attributs IsGranted de la classe et de la méthode
+        $classGrants = $refClass->getAttributes(\Ogan\Security\Attribute\IsGranted::class);
+        $methodGrants = $refMethod->getAttributes(\Ogan\Security\Attribute\IsGranted::class);
+
+        $allGrants = array_merge($classGrants, $methodGrants);
+
+        if (empty($allGrants)) {
+            return null; // Pas de contrainte d'accès
+        }
+
+        // Récupérer l'utilisateur depuis la session
+        $user = $this->getCurrentUser($request);
+
+        // Créer l'authorization checker
+        $checker = new \Ogan\Security\Authorization\AuthorizationChecker($user);
+
+        foreach ($allGrants as $grantAttribute) {
+            /** @var \Ogan\Security\Attribute\IsGranted $grant */
+            $grant = $grantAttribute->newInstance();
+            
+            // Résoudre le sujet si spécifié
+            $subject = null;
+            if ($grant->subject !== null && isset($params[$grant->subject])) {
+                $subject = $params[$grant->subject];
+            }
+
+            // Vérifier l'autorisation
+            if (!$checker->isGranted($grant->attribute, $subject)) {
+                // Non autorisé - rediriger vers login ou afficher 403
+                $accessDeniedUrl = \Ogan\Config\Config::get('security.access_denied_url', '/login');
+                
+                // Si l'utilisateur n'est pas connecté, rediriger vers login
+                if ($user === null) {
+                    return (new \Ogan\Http\Response())->redirect($accessDeniedUrl);
+                }
+                
+                // Sinon, afficher une erreur 403
+                $response = new \Ogan\Http\Response();
+                $response->setStatusCode(403);
+                
+                // Essayer de charger le template 403
+                try {
+                    $templatesPath = \Ogan\Config\Config::get('view.templates_path', 'templates');
+                    $view = new \Ogan\View\View($templatesPath, true);
+                    $content = $view->render('errors/403.ogan', ['message' => $grant->message]);
+                    $response->setContent($content);
+                } catch (\Exception $e) {
+                    $response->setContent('<h1>403 - Access Denied</h1><p>' . htmlspecialchars($grant->message) . '</p>');
+                }
+                
+                return $response;
+            }
+        }
+
+        return null; // Toutes les vérifications passées
+    }
+
+    /**
+     * Récupère l'utilisateur courant depuis la session
+     */
+    private function getCurrentUser(RequestInterface $request): ?\Ogan\Security\UserInterface
+    {
+        if (!$request->hasSession()) {
+            return null;
+        }
+
+        $session = $request->getSession();
+        $userId = $session->get('_auth_user_id');
+        
+        if (!$userId) {
+            return null;
+        }
+
+        // Récupérer la classe User configurée
+        $userClass = \Ogan\Config\Config::get('security.user_class', 'App\\Model\\User');
+        
+        if (!class_exists($userClass) || !method_exists($userClass, 'find')) {
+            return null;
+        }
+
+        return $userClass::find($userId);
+    }
 }
+

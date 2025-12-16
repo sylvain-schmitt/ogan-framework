@@ -38,7 +38,7 @@ class UserModelGenerator extends AbstractGenerator
 namespace App\Model;
 
 use Ogan\Database\Model;
-use Ogan\Security\Auth\UserInterface;
+use Ogan\Security\UserInterface;
 
 class User extends Model implements UserInterface
 {

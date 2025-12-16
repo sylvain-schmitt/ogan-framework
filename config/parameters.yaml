@@ -56,3 +56,16 @@ debug:
   debug_bar: true         # Afficher la debug bar
   collect_queries: true   # Logger les requêtes SQL
   max_dump_depth: 10      # Profondeur max pour dump()
+
+# Configuration de sécurité / autorisation
+security:
+  # Classe utilisateur pour l'authentification
+  user_class: App\Model\User
+  
+  # Hiérarchie des rôles (un rôle parent hérite des enfants)
+  role_hierarchy:
+    ROLE_ADMIN: [ROLE_USER]
+    ROLE_SUPER_ADMIN: [ROLE_ADMIN]
+  
+  # Page de refus d'accès
+  access_denied_url: /login

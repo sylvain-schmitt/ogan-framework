@@ -1,0 +1,13 @@
+{{ extend('layouts/base.ogan') }}
+
+{{ start('body') }}
+<div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+	<div class="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+		<div class="text-6xl mb-4">🚫</div>
+		<h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Accès Refusé</h1>
+		<p class="text-gray-600 dark:text-gray-300 mb-6">{{ message }}</p>
+		<a href="/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+			Retour à l'accueil
+		</a>
+	</div>
+</div>{{ end }}

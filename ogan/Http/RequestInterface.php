@@ -268,6 +268,28 @@ interface RequestInterface
      * @return array|null Les infos du fichier ou null si absent
      */
     public function getFile(string $key): ?array;
+
+    /**
+     * ───────────────────────────────────────────────────────────────────────
+     * VÉRIFIER SI UNE SESSION EXISTE
+     * ───────────────────────────────────────────────────────────────────────
+     * 
+     * Vérifie si une session est disponible pour cette requête.
+     * 
+     * @return bool TRUE si une session existe, FALSE sinon
+     */
+    public function hasSession(): bool;
+
+    /**
+     * ───────────────────────────────────────────────────────────────────────
+     * RÉCUPÉRER LA SESSION
+     * ───────────────────────────────────────────────────────────────────────
+     * 
+     * Récupère l'objet session associé à cette requête.
+     * 
+     * @return \Ogan\Session\SessionInterface|null L'objet session ou null
+     */
+    public function getSession(): ?\Ogan\Session\SessionInterface;
 }
 
 /**
