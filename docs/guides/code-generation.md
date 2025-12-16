@@ -25,14 +25,22 @@ Le framework Ogan inclut un système de génération de code pour créer rapidem
 ### Commandes disponibles
 
 ```bash
-php bin/make controller [Name]        # Générer un contrôleur (nom demandé si non fourni)
-php bin/make form [Name]              # Générer un FormType (nom demandé si non fourni)
-php bin/make model [Name]            # Générer un modèle en mode interactif (avec repository automatique)
-php bin/make repository [Name]        # Générer un repository seul (nom demandé si non fourni)
-php bin/make all [Name]               # Générer tout en mode interactif (modèle + repository + FormType + contrôleur)
+php bin/console make:controller <Name>   # Générer un contrôleur CRUD
+php bin/console make:form <Name>         # Générer un FormType
+php bin/console make:model [Name]        # Générer un modèle (mode interactif)
+php bin/console make:all [Name]          # Générer tout (modèle + repository + form + contrôleur)
 ```
 
-**Note** : Si le nom n'est pas fourni, il sera demandé interactivement.
+### Aide intégrée
+
+Chaque commande supporte `--help` ou `-h` pour afficher l'aide :
+
+```bash
+php bin/console make:controller --help
+php bin/console make:form -h
+php bin/console make:model --help
+php bin/console make:all --help
+```
 
 ---
 
@@ -41,9 +49,9 @@ php bin/make all [Name]               # Générer tout en mode interactif (modè
 ### Commande
 
 ```bash
-php bin/make controller User
+php bin/console make:controller User
 # ou
-php bin/make controller PostController
+php bin/console make:controller PostController
 ```
 
 ### Ce qui est généré
@@ -101,9 +109,7 @@ class UserController extends AbstractController
 ### Commande
 
 ```bash
-php bin/make repository User
-# ou
-php bin/make repository  # Mode interactif
+php bin/console make:repository User
 ```
 
 ### Génération automatique
@@ -171,9 +177,11 @@ Voir la [Documentation des modèles](./model-architecture.md) pour plus de déta
 ### Commande
 
 ```bash
-php bin/make form User
+php bin/console make:form User
 # ou
-php bin/make form UserFormType
+php bin/console make:form UserFormType
+# ou
+php bin/console make:form UserForm   # Génère UserFormType (pas de doublon)
 ```
 
 ### Ce qui est généré
@@ -237,9 +245,9 @@ class UserFormType extends AbstractType
 ### Commande
 
 ```bash
-php bin/make model User
+php bin/console make:model User
 # ou
-php bin/make model Post
+php bin/console make:model  # Mode interactif complet
 ```
 
 ### Ce qui est généré
@@ -298,9 +306,9 @@ class User extends Model
 ### Commande
 
 ```bash
-php bin/make all User
+php bin/console make:all User
 # ou
-php bin/make all  # Mode interactif complet
+php bin/console make:all  # Mode interactif complet
 ```
 
 ### Mode interactif
@@ -372,11 +380,10 @@ php bin/migrate
 Force la création même si le fichier existe déjà (écrase l'ancien fichier).
 
 ```bash
-php bin/make controller User --force
-php bin/make form User --force
-php bin/make model User --force
-php bin/make repository User --force
-php bin/make all User --force
+php bin/console make:controller User --force
+php bin/console make:form User --force
+php bin/console make:model User --force
+php bin/console make:all User --force
 ```
 
 **Note** : En mode interactif, si vous modifiez un modèle existant, le système force automatiquement l'écrasement pour préserver les nouvelles propriétés.
@@ -425,26 +432,26 @@ class PostFormType extends AbstractType
 ### 1. Ordre de génération
 
 ```bash
-# 1. Modèle d'abord
-php bin/make model User
+# 1. Modèle d'abord (mode interactif)
+php bin/console make:model User
 
 # 2. Migration
-php bin/migrate make User
+php bin/console migrate:make User
 
 # 3. FormType
-php bin/make form User
+php bin/console make:form User
 
 # 4. Contrôleur
-php bin/make controller User
+php bin/console make:controller User
 ```
 
 ### 2. Utiliser `all` pour un démarrage rapide
 
 ```bash
 # Génère tout d'un coup
-php bin/make all User
-php bin/migrate make User
-php bin/migrate
+php bin/console make:all User
+php bin/console migrate:make User
+php bin/console migrate
 ```
 
 ### 3. Personnaliser après génération

@@ -4,6 +4,32 @@ use Ogan\Console\Generator\{ControllerGenerator, FormGenerator, ModelGenerator, 
 use Ogan\Console\Interactive\ModelBuilder;
 
 /**
+ * Affiche l'aide pour une commande
+ */
+function showMakeHelp(string $command, string $description, array $options = []): void {
+    echo "\n📖 {$command}\n";
+    echo str_repeat('─', 60) . "\n\n";
+    echo "{$description}\n\n";
+    echo "Usage:\n  php bin/console {$command} <Name> [options]\n\n";
+    echo "Arguments:\n";
+    echo "  Name          Nom de l'élément à générer (ex: Product, User)\n\n";
+    echo "Options:\n";
+    echo "  --force       Force l'écrasement si le fichier existe\n";
+    echo "  --help, -h    Affiche cette aide\n";
+    foreach ($options as $opt => $desc) {
+        echo "  {$opt}    {$desc}\n";
+    }
+    echo "\n";
+}
+
+/**
+ * Vérifie si --help ou -h est demandé
+ */
+function isHelpRequested(array $args): bool {
+    return in_array('--help', $args) || in_array('-h', $args);
+}
+
+/**
  * Commandes Make (génération de code)
  */
 function registerMakeCommands($app) {
@@ -15,11 +41,18 @@ function registerMakeCommands($app) {
 
     // make:controller
     $app->addCommand('make:controller', function($args) use ($controllersPath) {
+        if (isHelpRequested($args)) {
+            showMakeHelp('make:controller', 'Génère un contrôleur CRUD complet avec routes.');
+            return 0;
+        }
+        
         $name = $args[0] ?? null;
         $force = in_array('--force', $args);
         
         if (!$name) {
+            echo "❌ Nom du contrôleur requis.\n\n";
             echo "Usage: php bin/console make:controller <Name> [--force]\n";
+            echo "Aide:  php bin/console make:controller --help\n";
             return 1;
         }
         
@@ -36,6 +69,11 @@ function registerMakeCommands($app) {
 
     // make:model
     $app->addCommand('make:model', function($args) use ($modelsPath, $repositoriesPath) {
+        if (isHelpRequested($args)) {
+            showMakeHelp('make:model', 'Génère un modèle avec propriétés et relations (mode interactif).');
+            return 0;
+        }
+        
         $name = $args[0] ?? null;
         $force = in_array('--force', $args);
         
@@ -79,11 +117,18 @@ function registerMakeCommands($app) {
 
     // make:form
     $app->addCommand('make:form', function($args) use ($formsPath, $modelsPath) {
+        if (isHelpRequested($args)) {
+            showMakeHelp('make:form', 'Génère un FormType avec validation.');
+            return 0;
+        }
+        
         $name = $args[0] ?? null;
         $force = in_array('--force', $args);
         
         if (!$name) {
+            echo "❌ Nom du FormType requis.\n\n";
             echo "Usage: php bin/console make:form <Name> [--force]\n";
+            echo "Aide:  php bin/console make:form --help\n";
             return 1;
         }
         
@@ -100,6 +145,11 @@ function registerMakeCommands($app) {
 
     // make:all
     $app->addCommand('make:all', function($args) use ($modelsPath, $repositoriesPath, $formsPath, $controllersPath) {
+        if (isHelpRequested($args)) {
+            showMakeHelp('make:all', 'Génère un modèle complet avec repository, form et contrôleur.');
+            return 0;
+        }
+        
         $name = $args[0] ?? null;
         $force = in_array('--force', $args);
         
@@ -141,3 +191,4 @@ function registerMakeCommands($app) {
         return 0;
     }, 'Génère modèle + repository + form + contrôleur');
 }
+

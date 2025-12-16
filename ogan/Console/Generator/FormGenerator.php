@@ -41,7 +41,16 @@ class FormGenerator extends AbstractGenerator
     {
         // Normaliser le nom
         $className = $this->toClassName($name);
-        if (!str_ends_with($className, 'FormType')) {
+        
+        // Nettoyer le nom pour éviter les doublons
+        // Si ça se termine déjà par "FormType", on garde tel quel
+        // Si ça se termine par "Form" (sans Type), on ajoute juste "Type"
+        // Sinon on ajoute "FormType"
+        if (str_ends_with($className, 'FormType')) {
+            // Déjà correct, ne rien faire
+        } elseif (str_ends_with($className, 'Form')) {
+            $className .= 'Type';
+        } else {
             $className .= 'FormType';
         }
 
