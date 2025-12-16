@@ -89,6 +89,8 @@ class UserAuthenticator
         $session->regenerate();
         $session->set('_auth_user_id', $user->getId());
         $session->set('_auth_user_roles', $user->getRoles());
+        $session->set('_auth_user_name', $user->getName());
+        $session->set('_auth_user_email', $user->getEmail());
     }
 
     /**
@@ -116,6 +118,8 @@ class UserAuthenticator
     {
         $session->remove('_auth_user_id');
         $session->remove('_auth_user_roles');
+        $session->remove('_auth_user_name');
+        $session->remove('_auth_user_email');
         $session->regenerate();
     }
 

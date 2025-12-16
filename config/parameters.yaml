@@ -37,9 +37,9 @@ session:
 # Configuration de l'authentification
 auth:
   # Envoyer un email de vérification à l'inscription
-  send_verification_email: false
+  send_verification_email: true
   # Envoyer un email pour le reset de mot de passe
-  send_password_reset_email: false
+  send_password_reset_email: true
   # Redirections après login/logout
   login_redirect: /dashboard
   logout_redirect: /login
@@ -49,3 +49,10 @@ mail:
   dsn: '%env(MAILER_DSN)%'
   from: '%env(MAIL_FROM)%'
   from_name: '%env(MAIL_FROM_NAME)%'
+
+# Configuration du debug (uniquement actif en dev)
+debug:
+  enabled: true           # Activer les outils de debug
+  debug_bar: true         # Afficher la debug bar
+  collect_queries: true   # Logger les requêtes SQL
+  max_dump_depth: 10      # Profondeur max pour dump()

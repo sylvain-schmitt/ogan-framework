@@ -355,4 +355,21 @@ class View implements ViewInterface
     {
         return $this->formHelper->formRest($form);
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DEBUG HELPER
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Dump une variable dans le template (pour le debug)
+     * Usage: {{ dump(variable) }}
+     */
+    public function dump(mixed ...$vars): string
+    {
+        $output = '';
+        foreach ($vars as $var) {
+            $output .= \Ogan\Debug\Dumper::dump($var);
+        }
+        return $output;
+    }
 }

@@ -247,6 +247,19 @@ class Router implements RouterInterface
             $params = $route->match($uri, $method, $host);
             if ($params !== false) {
                 // ─────────────────────────────────────────────────────────────
+                // DEBUG BAR : Enregistrer les infos de route
+                // ─────────────────────────────────────────────────────────────
+                if (class_exists(\Ogan\Debug\DebugBar::class)) {
+                    \Ogan\Debug\DebugBar::setRoute([
+                        'name' => $route->name ?? 'anonymous',
+                        'path' => $route->path,
+                        'controller' => basename(str_replace('\\', '/', $route->controllerClass)),
+                        'action' => $route->controllerMethod,
+                        'params' => $params
+                    ]);
+                }
+                
+                // ─────────────────────────────────────────────────────────────
                 // ÉTAPE 1 : Récupérer les middlewares de la route
                 // ─────────────────────────────────────────────────────────────
                 $middlewares = $route->getMiddlewares();

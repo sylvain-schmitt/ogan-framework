@@ -336,7 +336,16 @@ class QueryBuilder
     {
         $sql = $this->buildSelect();
         $stmt = $this->pdo->prepare($sql);
+        
+        $start = microtime(true);
         $stmt->execute($this->params);
+        $time = microtime(true) - $start;
+        
+        // Logger la requête pour la Debug Bar
+        if (class_exists(\Ogan\Debug\DebugBar::class)) {
+            \Ogan\Debug\DebugBar::addQuery($sql, $time, $this->params);
+        }
+        
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -400,7 +409,15 @@ class QueryBuilder
     {
         $sql = $this->buildSelect('COUNT(*) as count');
         $stmt = $this->pdo->prepare($sql);
+        
+        $start = microtime(true);
         $stmt->execute($this->params);
+        $time = microtime(true) - $start;
+        
+        if (class_exists(\Ogan\Debug\DebugBar::class)) {
+            \Ogan\Debug\DebugBar::addQuery($sql, $time, $this->params);
+        }
+        
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return (int)($result['count'] ?? 0);
     }
@@ -423,7 +440,14 @@ class QueryBuilder
         $sql = "INSERT INTO {$this->table} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
 
         $stmt = $this->pdo->prepare($sql);
+        
+        $start = microtime(true);
         $stmt->execute($data);
+        $time = microtime(true) - $start;
+        
+        if (class_exists(\Ogan\Debug\DebugBar::class)) {
+            \Ogan\Debug\DebugBar::addQuery($sql, $time, $data);
+        }
 
         return (int)$this->pdo->lastInsertId();
     }
@@ -455,7 +479,14 @@ class QueryBuilder
         $params = array_merge($params, $this->params);
 
         $stmt = $this->pdo->prepare($sql);
+        
+        $start = microtime(true);
         $stmt->execute($params);
+        $time = microtime(true) - $start;
+        
+        if (class_exists(\Ogan\Debug\DebugBar::class)) {
+            \Ogan\Debug\DebugBar::addQuery($sql, $time, $params);
+        }
 
         return $stmt->rowCount();
     }
@@ -475,7 +506,14 @@ class QueryBuilder
         $sql .= $this->buildWhere();
 
         $stmt = $this->pdo->prepare($sql);
+        
+        $start = microtime(true);
         $stmt->execute($this->params);
+        $time = microtime(true) - $start;
+        
+        if (class_exists(\Ogan\Debug\DebugBar::class)) {
+            \Ogan\Debug\DebugBar::addQuery($sql, $time, $this->params);
+        }
 
         return $stmt->rowCount();
     }

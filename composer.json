@@ -29,7 +29,10 @@
         "psr-4": {
             "Ogan\\": "ogan/",
             "App\\": "src/"
-        }
+        },
+        "files": [
+            "ogan/Debug/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
