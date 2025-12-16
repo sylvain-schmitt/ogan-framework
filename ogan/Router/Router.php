@@ -8,6 +8,7 @@ use RecursiveDirectoryIterator;
 use Ogan\DependencyInjection\ContainerInterface;
 use Ogan\Http\RequestInterface;
 use Ogan\Http\ResponseInterface;
+use Ogan\Http\Response;
 use Ogan\Router\Attributes\Route as RouteAttribute;
 use Ogan\Exception\RouteNotFoundException;
 
@@ -275,7 +276,7 @@ class Router implements RouterInterface
                     if (method_exists($controller, 'setRequestResponse')) {
                         // Note: $response n'est pas disponible ici dans le closure
                         // Il faudrait le passer si nécessaire
-                        $controller->setRequestResponse($request, new \Ogan\Http\Response(), $container);
+                        $controller->setRequestResponse($request, new Response(), $container);
                     }
 
                     // ─────────────────────────────────────────────────────────
@@ -296,12 +297,12 @@ class Router implements RouterInterface
                     $result = call_user_func_array([$controller, $route->controllerMethod], $params);
                     
                     // Si le contrôleur retourne une réponse, on l'utilise
-                    if ($result instanceof \Ogan\Http\ResponseInterface) {
+                    if ($result instanceof ResponseInterface) {
                         return $result;
                     }
                     
                     // Sinon on retourne la réponse par défaut (cas où le contrôleur a fait des echo)
-                    return new \Ogan\Http\Response();
+                    return new Response();
                 };
                 
                 // ─────────────────────────────────────────────────────────────
@@ -427,11 +428,11 @@ class Router implements RouterInterface
                 
                 // Si l'utilisateur n'est pas connecté, rediriger vers login
                 if ($user === null) {
-                    return (new \Ogan\Http\Response())->redirect($accessDeniedUrl);
+                    return (new Response())->redirect($accessDeniedUrl);
                 }
                 
                 // Sinon, afficher une erreur 403
-                $response = new \Ogan\Http\Response();
+                $response = new Response();
                 $response->setStatusCode(403);
                 
                 // Essayer de charger le template 403

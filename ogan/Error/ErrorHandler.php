@@ -526,6 +526,33 @@ HTML;
      */
     private function renderProductionPage(Throwable $exception, int $statusCode): void
     {
+        // Essayer d'utiliser les templates Ogan si disponibles
+        $templateName = match ($statusCode) {
+            403 => 'errors/403.ogan',
+            404 => 'errors/404.ogan',
+            default => 'errors/500.ogan',
+        };
+
+        try {
+            $templatesPath = \Ogan\Config\Config::get('view.templates_path', 'templates');
+            $templateFile = rtrim($templatesPath, '/') . '/' . $templateName;
+            
+            if (file_exists($templateFile)) {
+                $view = new \Ogan\View\View($templatesPath, true);
+                $message = $statusCode === 403 
+                    ? 'Accès refusé.'
+                    : ($statusCode === 404 
+                        ? 'La page que vous recherchez n\'existe pas.' 
+                        : 'Une erreur s\'est produite.');
+                        
+                echo $view->render($templateName, ['message' => $message]);
+                return;
+            }
+        } catch (Throwable $e) {
+            // Fallback vers HTML inline si le template échoue
+        }
+
+        // Fallback HTML inline (quand les templates ne sont pas disponibles)
         $title = $statusCode === 404 ? 'Page non trouvée' : 'Erreur serveur';
         $message = $statusCode === 404
             ? 'La page que vous recherchez n\'existe pas.'
