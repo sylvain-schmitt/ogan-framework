@@ -39,30 +39,90 @@ function registerMakeCommands($app) {
     $modelsPath = $projectRoot . '/src/Model';
     $repositoriesPath = $projectRoot . '/src/Repository';
 
-    // make:controller
+    // make:controller (mode interactif)
     $app->addCommand('make:controller', function($args) use ($controllersPath) {
         if (isHelpRequested($args)) {
-            showMakeHelp('make:controller', 'Génère un contrôleur CRUD complet avec routes.');
+            showMakeHelp('make:controller', 'Génère un contrôleur CRUD avec choix des actions (mode interactif).', [
+                '--all' => 'Génère toutes les actions sans demander'
+            ]);
             return 0;
         }
         
         $name = $args[0] ?? null;
         $force = in_array('--force', $args);
+        $all = in_array('--all', $args);
         
         if (!$name) {
             echo "❌ Nom du contrôleur requis.\n\n";
-            echo "Usage: php bin/console make:controller <Name> [--force]\n";
+            echo "Usage: php bin/console make:controller <Name> [--force] [--all]\n";
             echo "Aide:  php bin/console make:controller --help\n";
             return 1;
         }
         
         echo "🎮 Génération du contrôleur : {$name}\n\n";
         
+        $actions = [];
+        
+        if (!$all) {
+            // Mode interactif : demander les actions à générer
+            echo "📋 Actions CRUD disponibles\n";
+            echo "───────────────────────────────────────────────────────────\n";
+            echo "Sélectionnez les actions à générer (o/n) :\n\n";
+            
+            $availableActions = [
+                'list'   => 'Liste (index)',
+                'show'   => 'Afficher un élément',
+                'create' => 'Formulaire de création',
+                'store'  => 'Enregistrer (POST)',
+                'edit'   => 'Formulaire d\'édition',
+                'update' => 'Mettre à jour (POST)',
+                'delete' => 'Supprimer (POST)'
+            ];
+            
+            // Demander tout sélectionner d'abord
+            echo "Tout sélectionner ? (o/n) [o] : ";
+            $handle = fopen("php://stdin", "r");
+            $allResponse = trim(fgets($handle));
+            fclose($handle);
+            
+            if (empty($allResponse) || in_array(strtolower($allResponse), ['o', 'oui', 'y', 'yes'])) {
+                $actions = array_keys($availableActions);
+                echo "✅ Toutes les actions sélectionnées\n\n";
+            } else {
+                echo "\n";
+                foreach ($availableActions as $action => $description) {
+                    echo "  {$description} ({$action}) ? (o/n) [o] : ";
+                    $handle = fopen("php://stdin", "r");
+                    $response = trim(fgets($handle));
+                    fclose($handle);
+                    
+                    if (empty($response) || in_array(strtolower($response), ['o', 'oui', 'y', 'yes'])) {
+                        $actions[] = $action;
+                        echo "    ✅ {$action}\n";
+                    } else {
+                        echo "    ⏭️  {$action} ignoré\n";
+                    }
+                }
+                echo "\n";
+            }
+            
+            if (empty($actions)) {
+                echo "❌ Aucune action sélectionnée. Abandon.\n";
+                return 1;
+            }
+            
+            // Afficher récapitulatif
+            echo "📝 Actions à générer : " . implode(', ', $actions) . "\n\n";
+        }
+        
         $generator = new ControllerGenerator();
-        $filepath = $generator->generate($name, $controllersPath, $force);
+        $filepath = $generator->generate($name, $controllersPath, $force, $actions);
         
         echo "✅ Contrôleur généré : " . basename($filepath) . "\n";
         echo "📁 Fichier : {$filepath}\n";
+        
+        // Rappeler de créer les templates
+        echo "\n💡 N'oubliez pas de créer les templates dans templates/" . strtolower(str_replace('Controller', '', $name)) . "/\n";
         
         return 0;
     }, 'Génère un contrôleur');
@@ -102,9 +162,28 @@ function registerMakeCommands($app) {
         $filepath = $generator->generate($name, $modelsPath, $properties, $relations, $force);
         echo "✅ Modèle généré : " . basename($filepath) . "\n";
         
+        // ─────────────────────────────────────────────────────────────
+        // RELATIONS BIDIRECTIONNELLES
+        // Ajouter automatiquement les relations inverses aux modèles liés
+        // ─────────────────────────────────────────────────────────────
+        $modelClassName = $generator->toClassName($name);
+        
+        foreach ($relations as $relation) {
+            $relationType = $relation['type'] ?? '';
+            $relatedModel = $relation['relatedModel'] ?? '';
+            $foreignKey = $relation['foreignKey'] ?? strtolower($relatedModel) . '_id';
+            
+            if ($relationType === 'ManyToOne' && !empty($relatedModel)) {
+                $relatedClass = "App\\Model\\" . $relatedModel;
+                
+                if ($generator->addInverseRelation($relatedClass, $modelClassName, $foreignKey, $modelsPath)) {
+                    echo "🔗 Relation inverse OneToMany ajoutée à {$relatedModel}\n";
+                }
+            }
+        }
+        
         // Générer le repository
         echo "\n📚 Génération du repository...\n";
-        $modelClassName = $generator->toClassName($name);
         $modelClass = "App\\Model\\{$modelClassName}";
         $repoGenerator = new RepositoryGenerator();
         $repoPath = $repoGenerator->generate($name, $repositoriesPath, $modelClass, null, $force);
@@ -190,5 +269,62 @@ function registerMakeCommands($app) {
         
         return 0;
     }, 'Génère modèle + repository + form + contrôleur');
-}
 
+    // make:migration (alias de migrate:make pour cohérence du naming)
+    $app->addCommand('make:migration', function($args) {
+        $projectRoot = dirname(__DIR__, 2);
+        $migrationsPath = $projectRoot . '/database/migrations';
+        $modelsPath = $projectRoot . '/src/Model';
+        
+        if (isHelpRequested($args)) {
+            showMakeHelp('make:migration', 'Génère une migration depuis un modèle (alias de migrate:make).');
+            return 0;
+        }
+        
+        $modelInput = $args[0] ?? null;
+        $force = in_array('--force', $args);
+        
+        // Connexion à la base pour détecter les tables existantes
+        try {
+            $pdo = \Ogan\Database\Database::getConnection();
+        } catch (\Exception $e) {
+            $pdo = null; // Pas de connexion, on génère CREATE TABLE par défaut
+        }
+        
+        if (!$modelInput) {
+            echo "❌ Nom du modèle requis.\n\n";
+            echo "Usage: php bin/console make:migration <ModelName> [--force]\n";
+            return 1;
+        }
+        
+        // Trouver la classe du modèle
+        if (!str_contains($modelInput, '\\')) {
+            echo "🔍 Recherche du modèle : {$modelInput}\n";
+            $modelClass = findModelClass($modelInput, $modelsPath);
+            
+            if (!$modelClass) {
+                echo "❌ Modèle '{$modelInput}' non trouvé\n";
+                return 1;
+            }
+            
+            echo "✅ Modèle trouvé : {$modelClass}\n\n";
+        } else {
+            $modelClass = $modelInput;
+        }
+        
+        echo "🔧 Génération de la migration : {$modelClass}\n\n";
+        
+        try {
+            $generator = new \Ogan\Database\Migration\MigrationGenerator();
+            $filepath = $generator->generateFromModel($modelClass, $migrationsPath, $force, $pdo);
+            
+            echo "✅ Migration générée : " . basename($filepath) . "\n";
+            echo "📁 Fichier : {$filepath}\n";
+        } catch (\Exception $e) {
+            echo "❌ Erreur : " . $e->getMessage() . "\n";
+            return 1;
+        }
+        
+        return 0;
+    }, 'Génère une migration depuis un modèle');
+}

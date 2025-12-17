@@ -199,6 +199,12 @@ class ModelBuilder
             }
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // AUTO-DÉTECTION DU TYPE SELON LE NOM DE LA PROPRIÉTÉ
+        // ─────────────────────────────────────────────────────────────
+        $suggestedType = $this->detectTypeFromPropertyName($name);
+        $suggestedTypeName = $this->getTypeDisplayName($suggestedType);
+
         echo "\nTypes disponibles :\n";
         echo "  1. string (VARCHAR/TEXT)\n";
         echo "  2. int (INTEGER)\n";
@@ -208,7 +214,13 @@ class ModelBuilder
         echo "  6. text (TEXT)\n";
         echo "  7. email (VARCHAR avec validation email)\n";
 
-        $typeChoice = $this->ask("Type (1-7) [1] : ", "1");
+        // Afficher le type suggéré
+        if ($suggestedType !== 'string') {
+            echo "\n💡 Type suggéré pour '{$name}' : {$suggestedTypeName}\n";
+        }
+        
+        $defaultChoice = $this->typeToChoice($suggestedType);
+        $typeChoice = $this->ask("Type (1-7) [{$defaultChoice}] : ", $defaultChoice);
         $type = $this->mapTypeChoice($typeChoice);
 
         $nullable = $this->askYesNo("Nullable ? (o/n) [o] : ", true);
@@ -220,6 +232,95 @@ class ModelBuilder
             'comment' => '',
             'isRelation' => false
         ];
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * DÉTECTER LE TYPE DEPUIS LE NOM D'UNE PROPRIÉTÉ
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * Patterns reconnus :
+     * - *_at, *At (createdAt, deletedAt, publishedAt) → datetime
+     * - email, *Email → email
+     * - is*, has* (isActive, hasAccess) → bool
+     * - price, amount, *Price, *Amount → float
+     * - count, *Count, quantity, age, *_count → int
+     * - description, content, body, *Description → text
+     */
+    private function detectTypeFromPropertyName(string $name): string
+    {
+        $lower = strtolower($name);
+        $normalized = strtolower(preg_replace('/([A-Z])/', '_$1', $name));
+        
+        // DateTime patterns
+        if (preg_match('/(_at|At)$/', $name) || in_array($lower, ['date', 'datetime', 'birthday', 'birthdate'])) {
+            return 'datetime';
+        }
+        
+        // Email pattern
+        if ($lower === 'email' || str_ends_with($lower, 'email')) {
+            return 'email';
+        }
+        
+        // Boolean patterns (is*, has*, can*, should*)
+        if (preg_match('/^(is|has|can|should|was|will|do|does)[A-Z]/', $name) ||
+            in_array($lower, ['active', 'enabled', 'visible', 'verified', 'published', 'deleted'])) {
+            return 'bool';
+        }
+        
+        // Float patterns (price, amount, rate, percentage, salary...)
+        if (in_array($lower, ['price', 'amount', 'rate', 'percentage', 'salary', 'wage', 'cost', 'fee', 'total', 'subtotal', 'tax', 'discount', 'balance']) ||
+            preg_match('/(price|amount|rate|cost|fee|total|tax|discount)$/i', $name)) {
+            return 'float';
+        }
+        
+        // Integer patterns (count, quantity, age, number, position, order...)
+        if (in_array($lower, ['count', 'quantity', 'age', 'number', 'position', 'order', 'rank', 'priority', 'level', 'score', 'points', 'views', 'likes', 'stock']) ||
+            preg_match('/(_count|Count|_number|Number|_qty|Qty)$/', $name)) {
+            return 'int';
+        }
+        
+        // Text patterns (description, content, body, bio, summary...)
+        if (in_array($lower, ['description', 'content', 'body', 'bio', 'biography', 'summary', 'notes', 'comment', 'message', 'text', 'html', 'markdown'])) {
+            return 'text';
+        }
+        
+        // Default
+        return 'string';
+    }
+
+    /**
+     * Convertit un type en numéro de choix
+     */
+    private function typeToChoice(string $type): string
+    {
+        return match ($type) {
+            'string' => '1',
+            'int' => '2',
+            'float' => '3',
+            'bool' => '4',
+            'datetime' => '5',
+            'text' => '6',
+            'email' => '7',
+            default => '1'
+        };
+    }
+
+    /**
+     * Nom d'affichage pour un type
+     */
+    private function getTypeDisplayName(string $type): string
+    {
+        return match ($type) {
+            'string' => 'string (VARCHAR)',
+            'int' => 'int (INTEGER)',
+            'float' => 'float (DECIMAL)',
+            'bool' => 'bool (BOOLEAN)',
+            'datetime' => 'datetime (DATETIME)',
+            'text' => 'text (TEXT)',
+            'email' => 'email (VARCHAR)',
+            default => $type
+        };
     }
 
     /**

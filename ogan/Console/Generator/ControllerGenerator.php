@@ -23,6 +23,11 @@ namespace Ogan\Console\Generator;
 class ControllerGenerator extends AbstractGenerator
 {
     /**
+     * Actions CRUD disponibles
+     */
+    public const AVAILABLE_ACTIONS = ['list', 'show', 'create', 'store', 'edit', 'update', 'delete'];
+    
+    /**
      * ═══════════════════════════════════════════════════════════════════
      * GÉNÉRER UN CONTRÔLEUR
      * ═══════════════════════════════════════════════════════════════════
@@ -30,12 +35,18 @@ class ControllerGenerator extends AbstractGenerator
      * @param string $name Nom du contrôleur (ex: "User" ou "UserController")
      * @param string $controllersPath Chemin vers le dossier des contrôleurs
      * @param bool $force Forcer la création même si le fichier existe
+     * @param array $actions Actions à générer (vide = toutes)
      * @return string Chemin du fichier créé
      * 
      * ═══════════════════════════════════════════════════════════════════
      */
-    public function generate(string $name, string $controllersPath, bool $force = false): string
+    public function generate(string $name, string $controllersPath, bool $force = false, array $actions = []): string
     {
+        // Si aucune action spécifiée, générer toutes les actions
+        if (empty($actions)) {
+            $actions = self::AVAILABLE_ACTIONS;
+        }
+        
         // Normaliser le nom
         $className = $this->toClassName($name);
         if (!str_ends_with($className, 'Controller')) {
@@ -54,7 +65,7 @@ class ControllerGenerator extends AbstractGenerator
         $this->ensureDirectory($controllersPath);
 
         // Générer le contenu
-        $content = $this->generateControllerContent($className);
+        $content = $this->generateControllerContent($className, $actions);
 
         // Écrire le fichier
         $this->writeFile($filepath, $content);
@@ -67,13 +78,50 @@ class ControllerGenerator extends AbstractGenerator
      * GÉNÉRER LE CONTENU DU CONTRÔLEUR
      * ═══════════════════════════════════════════════════════════════════
      */
-    private function generateControllerContent(string $className): string
+    private function generateControllerContent(string $className, array $actions): string
     {
         $routeName = $this->toRouteName($className);
         $modelName = str_replace('Controller', '', $className);
         $modelClass = "App\\Model\\{$modelName}";
         $formTypeName = $modelName . 'FormType';
         $formTypeClass = "App\\Form\\{$formTypeName}";
+        
+        // Générer les méthodes selon les actions sélectionnées
+        $methods = [];
+        
+        if (in_array('list', $actions)) {
+            $methods[] = $this->generateListMethod($routeName, $modelName);
+        }
+        
+        if (in_array('show', $actions)) {
+            $methods[] = $this->generateShowMethod($routeName, $modelName);
+        }
+        
+        if (in_array('create', $actions)) {
+            $methods[] = $this->generateCreateMethod($routeName, $modelName, $formTypeName);
+        }
+        
+        if (in_array('store', $actions)) {
+            $methods[] = $this->generateStoreMethod($routeName, $modelName, $formTypeName);
+        }
+        
+        if (in_array('edit', $actions)) {
+            $methods[] = $this->generateEditMethod($routeName, $modelName, $formTypeName);
+        }
+        
+        if (in_array('update', $actions)) {
+            $methods[] = $this->generateUpdateMethod($routeName, $modelName, $formTypeName);
+        }
+        
+        if (in_array('delete', $actions)) {
+            $methods[] = $this->generateDeleteMethod($routeName, $modelName);
+        }
+        
+        $methodsCode = implode("\n", $methods);
+        
+        // N'importer FormType que si nécessaire
+        $needsForm = array_intersect(['create', 'store', 'edit', 'update'], $actions);
+        $formImport = !empty($needsForm) ? "use {$formTypeClass};" : "// use {$formTypeClass}; // Décommenter si vous utilisez des formulaires";
 
         return <<<PHP
 <?php
@@ -93,10 +141,22 @@ namespace App\\Controller;
 use Ogan\\Controller\\AbstractController;
 use Ogan\\Router\\Attributes\\Route;
 use {$modelClass};
-use {$formTypeClass};
+{$formImport}
 
 class {$className} extends AbstractController
 {
+{$methodsCode}
+}
+
+PHP;
+    }
+
+    /**
+     * Générer la méthode list (index)
+     */
+    private function generateListMethod(string $routeName, string $modelName): string
+    {
+        return <<<PHP
     /**
      * ═══════════════════════════════════════════════════════════════════
      * LISTER LES ÉLÉMENTS
@@ -113,6 +173,15 @@ class {$className} extends AbstractController
         ]);
     }
 
+PHP;
+    }
+
+    /**
+     * Générer la méthode show
+     */
+    private function generateShowMethod(string $routeName, string $modelName): string
+    {
+        return <<<PHP
     /**
      * ═══════════════════════════════════════════════════════════════════
      * AFFICHER UN ÉLÉMENT
@@ -134,6 +203,15 @@ class {$className} extends AbstractController
         ]);
     }
 
+PHP;
+    }
+
+    /**
+     * Générer la méthode create
+     */
+    private function generateCreateMethod(string $routeName, string $modelName, string $formTypeName): string
+    {
+        return <<<PHP
     /**
      * ═══════════════════════════════════════════════════════════════════
      * CRÉER UN ÉLÉMENT (Formulaire)
@@ -153,6 +231,15 @@ class {$className} extends AbstractController
         ]);
     }
 
+PHP;
+    }
+
+    /**
+     * Générer la méthode store
+     */
+    private function generateStoreMethod(string $routeName, string $modelName, string $formTypeName): string
+    {
+        return <<<PHP
     /**
      * ═══════════════════════════════════════════════════════════════════
      * STOCKER UN ÉLÉMENT
@@ -186,6 +273,15 @@ class {$className} extends AbstractController
         ]);
     }
 
+PHP;
+    }
+
+    /**
+     * Générer la méthode edit
+     */
+    private function generateEditMethod(string $routeName, string $modelName, string $formTypeName): string
+    {
+        return <<<PHP
     /**
      * ═══════════════════════════════════════════════════════════════════
      * ÉDITER UN ÉLÉMENT (Formulaire)
@@ -216,6 +312,15 @@ class {$className} extends AbstractController
         ]);
     }
 
+PHP;
+    }
+
+    /**
+     * Générer la méthode update
+     */
+    private function generateUpdateMethod(string $routeName, string $modelName, string $formTypeName): string
+    {
+        return <<<PHP
     /**
      * ═══════════════════════════════════════════════════════════════════
      * METTRE À JOUR UN ÉLÉMENT
@@ -256,6 +361,15 @@ class {$className} extends AbstractController
         ]);
     }
 
+PHP;
+    }
+
+    /**
+     * Générer la méthode delete
+     */
+    private function generateDeleteMethod(string $routeName, string $modelName): string
+    {
+        return <<<PHP
     /**
      * ═══════════════════════════════════════════════════════════════════
      * SUPPRIMER UN ÉLÉMENT
@@ -276,9 +390,8 @@ class {$className} extends AbstractController
         \$this->session->setFlash('success', '{$modelName} supprimé avec succès');
         return \$this->redirect('/{$routeName}s');
     }
-}
-
 PHP;
     }
 }
+
 

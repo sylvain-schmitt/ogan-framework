@@ -259,13 +259,26 @@ PHP;
     private function generateConstraintsCode(string $name, string $fieldType, bool $required, string $type): string
     {
         $constraints = [];
+        $lowerName = strtolower($name);
         
+        // Required pour les champs obligatoires
         if ($required) {
             $constraints[] = "                    new Required(),";
         }
         
+        // Email pour les champs email
         if ($fieldType === 'EmailType') {
             $constraints[] = "                    new Email(),";
+        }
+        
+        // MinLength pour les mots de passe
+        if (str_contains($lowerName, 'password')) {
+            $constraints[] = "                    new MinLength(8, 'Le mot de passe doit contenir au moins 8 caractères'),";
+        }
+        
+        // Length pour les noms, titres, etc.
+        if (in_array($lowerName, ['name', 'title', 'firstname', 'lastname', 'username']) && $fieldType === 'TextType') {
+            $constraints[] = "                    new MinLength(2, 'Ce champ doit contenir au moins 2 caractères'),";
         }
         
         return implode("\n", $constraints) . (empty($constraints) ? '' : "\n");
@@ -283,10 +296,19 @@ PHP;
         if ($modelProperties && !empty($modelProperties)) {
             foreach ($modelProperties as $prop) {
                 $name = $prop['name'];
+                $lowerName = strtolower($name);
                 $type = $this->improveTypeDetection($name, $prop['type'] ?? 'string');
                 
+                // Email constraint
                 if ($type === 'email' && !in_array('Email', $constraints)) {
                     $constraints[] = 'Email';
+                }
+                
+                // MinLength pour password et certains champs
+                if ((str_contains($lowerName, 'password') || 
+                     in_array($lowerName, ['name', 'title', 'firstname', 'lastname', 'username'])) &&
+                    !in_array('MinLength', $constraints)) {
+                    $constraints[] = 'MinLength';
                 }
             }
         }
