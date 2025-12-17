@@ -287,6 +287,52 @@ vendor/bin/phpunit tests/Integration  # Tests d'intégration uniquement
 - [x] Génération de la migration `remember_tokens`
 - [x] Génération des pages Dashboard et Profil utilisateur
 
+### Phase 1.8 : Système de Cache et Améliorations CLI (TERMINÉE ✅ - 2025-12-17)
+
+#### Système de Cache
+- [x] **CacheInterface** inspirée PSR-16
+- [x] **AbstractCache** avec logique commune
+- [x] **FileCache** avec écriture atomique et garbage collection
+- [x] **ArrayCache** pour le cache en mémoire (tests)
+- [x] **CacheManager** (singleton factory)
+- [x] Helpers globaux : `cache()`, `cache_forget()`, `cache_clear()`, `cache_remember()`
+- [x] Cache des requêtes via `QueryBuilder::cache(ttl)`
+- [x] Auto-compilation des routes en production
+
+**Commandes CLI Cache :**
+```bash
+php bin/console cache:clear [--type=data|routes|all]
+php bin/console cache:stats
+php bin/console cache:routes
+php bin/console cache:gc
+```
+
+#### Améliorations make:model
+- [x] **Relations bidirectionnelles** : ManyToOne sur Product → OneToMany automatique sur Category
+- [x] **Auto-détection des types** selon le nom de propriété
+  - `createdAt` → datetime
+  - `isActive` → bool
+  - `price` → float
+  - `categoryId` → Relation ManyToOne
+- [x] Repository généré automatiquement
+
+#### Améliorations make:controller
+- [x] **Mode interactif** : choix des actions (list, show, create, edit, delete...)
+- [x] Option `--all` pour générer toutes les actions
+
+#### Améliorations make:form
+- [x] **Contraintes auto-détectées** :
+  - `email` → `Email()` constraint
+  - `password` → `MinLength(8)`
+  - `name`, `title` → `MinLength(2)`
+
+#### Nouvelle commande
+- [x] `make:migration` (alias de `migrate:make`)
+
+**Documentation :**
+- `docs/guides/cache.md` (nouveau)
+- `docs/guides/code-generation.md` (mis à jour)
+
 ---
 
 ## 📁 Structure Finale

@@ -25,10 +25,11 @@ Le framework Ogan inclut un système de génération de code pour créer rapidem
 ### Commandes disponibles
 
 ```bash
-php bin/console make:controller <Name>   # Générer un contrôleur CRUD
-php bin/console make:form <Name>         # Générer un FormType
+php bin/console make:controller <Name>   # Générer un contrôleur CRUD (mode interactif)
+php bin/console make:form <Name>         # Générer un FormType avec contraintes auto
 php bin/console make:model [Name]        # Générer un modèle (mode interactif)
 php bin/console make:all [Name]          # Générer tout (modèle + repository + form + contrôleur)
+php bin/console make:migration <Model>   # Générer une migration (alias de migrate:make)
 ```
 
 ### Aide intégrée
@@ -44,32 +45,61 @@ php bin/console make:all --help
 
 ---
 
-## 🎮 Générer un contrôleur
+## 🎨 Générer un contrôleur
 
 ### Commande
 
 ```bash
 php bin/console make:controller User
-# ou
-php bin/console make:controller PostController
+# ou avec toutes les actions
+php bin/console make:controller User --all
 ```
 
-### Ce qui est généré
+### Mode interactif (par défaut)
 
-Le générateur crée un contrôleur complet avec :
-- ✅ Méthodes CRUD complètes (list, show, create, store, edit, update, delete)
-- ✅ Routes avec attributs PHP 8
-- ✅ Intégration avec les FormTypes
-- ✅ Gestion des sessions et messages flash
-- ✅ Redirections appropriées
-
-### Exemple de sortie
+La commande vous permet de **choisir les actions à générer** :
 
 ```bash
 🎮 Génération du contrôleur : User
 
-✅ Contrôleur généré avec succès : UserController.php
+📋 Actions CRUD disponibles
+─────────────────────────────────────
+
+Tout sélectionner ? (o/n) [o] : n
+
+  Liste (index) (list) ? (o/n) [o] : o
+    ✅ list
+  Afficher un élément (show) ? (o/n) [o] : o
+    ✅ show
+  Formulaire de création (create) ? (o/n) [o] : n
+    ⏭️  create ignoré
+  ...
+```
+
+### Actions disponibles
+
+| Action | Méthode | Route | Description |
+|--------|---------|-------|-------------|
+| `list` | `list()` | `GET /users` | Liste les éléments |
+| `show` | `show()` | `GET /user/{id}` | Affiche un élément |
+| `create` | `create()` | `GET /user/create` | Formulaire de création |
+| `store` | `store()` | `POST /user/store` | Enregistre l'élément |
+| `edit` | `edit()` | `GET /user/{id}/edit` | Formulaire d'édition |
+| `update` | `update()` | `POST /user/{id}/update` | Met à jour l'élément |
+| `delete` | `delete()` | `POST /user/{id}/delete` | Supprime l'élément |
+
+### Options
+
+- `--all` : Génère toutes les actions sans demander
+- `--force` : Écrase le fichier existant
+
+### Exemple de sortie
+
+```bash
+✅ Contrôleur généré : UserController.php
 📁 Fichier : /path/to/src/Controller/UserController.php
+
+💡 N'oubliez pas de créer les templates dans templates/user/
 ```
 
 ### Structure générée
@@ -187,11 +217,20 @@ php bin/console make:form UserForm   # Génère UserFormType (pas de doublon)
 ### Ce qui est généré
 
 Le générateur crée un FormType avec :
-- ✅ Champs de base (name, email)
-- ✅ Types de champs appropriés (TextType, EmailType)
+- ✅ Champs détectés automatiquement depuis le modèle
+- ✅ Types de champs appropriés (TextType, EmailType, NumberType...)
+- ✅ **Contraintes de validation automatiques**
 - ✅ Classes Tailwind CSS par défaut
 - ✅ Labels et placeholders
-- ✅ Bouton de soumission
+
+### Contraintes auto-détectées
+
+| Champ | Contrainte(s) |
+|-------|---------------|
+| `email` | `Email()` |
+| `password` | `MinLength(8)` |
+| `name`, `title`, `username` | `MinLength(2)` |
+| Champs non-nullable | `Required()` |
 
 ### Exemple de sortie
 
@@ -211,9 +250,8 @@ namespace App\Form;
 
 use Ogan\Form\AbstractType;
 use Ogan\Form\FormBuilder;
-use Ogan\Form\Types\TextType;
-use Ogan\Form\Types\EmailType;
-use Ogan\Form\Types\SubmitType;
+use Ogan\Form\Types\{TextType, EmailType, SubmitType};
+use Ogan\Form\Constraint\{Required, Email, MinLength};
 
 class UserFormType extends AbstractType
 {
@@ -221,19 +259,26 @@ class UserFormType extends AbstractType
     {
         $builder
             ->add('name', TextType::class, [
-                'label' => 'Nom',
-                'required' => true,
-                // ...
+                'label' => 'Name',
+                'constraints' => [
+                    new Required(),
+                    new MinLength(2, 'Ce champ doit contenir au moins 2 caractères'),
+                ],
             ])
             ->add('email', EmailType::class, [
                 'label' => 'Email',
-                'required' => true,
-                // ...
+                'constraints' => [
+                    new Required(),
+                    new Email(),
+                ],
             ])
-            ->add('submit', SubmitType::class, [
-                'label' => 'Enregistrer',
-                // ...
-            ]);
+            ->add('password', PasswordType::class, [
+                'constraints' => [
+                    new Required(),
+                    new MinLength(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+                ],
+            ])
+            ->add('submit', SubmitType::class);
     }
 }
 ```
@@ -250,22 +295,48 @@ php bin/console make:model User
 php bin/console make:model  # Mode interactif complet
 ```
 
+### Auto-détection des types
+
+Le mode interactif **détecte automatiquement** le type selon le nom de la propriété :
+
+| Pattern | Type suggéré |
+|---------|---------------|
+| `createdAt`, `publishedAt` | `datetime` |
+| `email`, `userEmail` | `email` |
+| `isActive`, `hasAccess` | `bool` |
+| `price`, `amount`, `tax` | `float` |
+| `count`, `quantity`, `age` | `int` |
+| `description`, `content` | `text` |
+| `categoryId`, `userId` | **Relation ManyToOne** |
+
+### Relations bidirectionnelles
+
+Quand vous ajoutez une propriété comme `categoryId` :
+1. Le modèle `Product` reçoit `category()` (ManyToOne)
+2. Le modèle `Category` reçoit automatiquement `products()` (OneToMany)
+
 ### Ce qui est généré
 
 Le générateur crée un modèle avec :
 - ✅ Propriétés privées avec types
 - ✅ Getters et setters publics
 - ✅ Structure compatible avec l'ORM
-- ✅ Propriétés de base (id, name, createdAt, updatedAt)
+- ✅ Propriétés de base (id, createdAt, updatedAt)
+- ✅ **Relations détectées automatiquement**
+- ✅ **Repository généré automatiquement**
 
 ### Exemple de sortie
 
 ```bash
-📦 Génération du modèle : User
+📦 Génération du modèle : Product
 
-✅ Modèle généré avec succès : User.php
-📁 Fichier : /path/to/src/Model/User.php
-💡 N'oubliez pas de générer la migration : php bin/migrate make User
+✅ Modèle généré : Product.php
+🔗 Relation inverse OneToMany ajoutée à Category
+
+📚 Génération du repository...
+✅ Repository généré : ProductRepository.php
+
+💡 N'oubliez pas : php bin/console migrate:make Product
 ```
 
 ### Structure générée
