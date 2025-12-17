@@ -50,7 +50,8 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 - 💡 **Amélioration** : Support des agrégations (SUM, AVG, COUNT, etc.)
 
 ### 4. Cache de Requêtes
-- 💡 **Amélioration** : Cache des résultats de requêtes fréquentes
+- ✅ **TERMINÉ** : Méthode `cache(ttl)` sur le QueryBuilder
+- ✅ **TERMINÉ** : Cache automatique des résultats de requêtes
 - 💡 **Amélioration** : Invalidation intelligente du cache
 
 ## 🎨 Templates
@@ -101,9 +102,15 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 
 ### 1. Cache
 - ✅ **TERMINÉ** : Cache de vues compilées (système de compilation de templates)
-- ✅ **TERMINÉ** : Commande `cache:clear` pour vider le cache
-- 💡 **Amélioration** : Cache de configuration
-- 💡 **Amélioration** : Cache de routes compilées
+- ✅ **TERMINÉ** : Commande `cache:clear` avec types (--type=data|routes|all)
+- ✅ **TERMINÉ** : Commande `cache:stats` pour les statistiques
+- ✅ **TERMINÉ** : Commande `cache:gc` pour le garbage collection
+- ✅ **TERMINÉ** : Cache de routes compilées (auto-compilation en prod)
+- ✅ **TERMINÉ** : CacheInterface (inspirée PSR-16)
+- ✅ **TERMINÉ** : FileCache avec écriture atomique
+- ✅ **TERMINÉ** : ArrayCache pour les tests
+- ✅ **TERMINÉ** : Helpers globaux : `cache()`, `cache_forget()`, `cache_clear()`, `cache_remember()`
+- 💡 **Amélioration** : Support Redis/Memcached
 - 💡 **Amélioration** : Optimisation opcache pour les templates compilés
 
 ### 2. Optimisation
@@ -139,15 +146,20 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 ## 📦 Distribution
 
 ### 1. CLI
-- ✅ **TERMINÉ** : Système console unifié (`bin/console`) avec 12 commandes :
-  - ✅ **Make** : `make:controller`, `make:model`, `make:form`, `make:all` (mode interactif)
-  - ✅ **Migrate** : `migrate`, `migrate:rollback`, `migrate:status`, `migrate:make`
+- ✅ **TERMINÉ** : Système console unifié (`bin/console`) avec 16+ commandes :
+  - ✅ **Make** : `make:controller` (interactif), `make:model`, `make:form`, `make:all`, `make:migration`
+  - ✅ **Migrate** : `migrate`, `migrate:rollback`, `migrate:status`, `migrate:make`, `migrate:diff`
+  - ✅ **Cache** : `cache:clear`, `cache:stats`, `cache:routes`, `cache:gc`
   - ✅ **Tailwind** : `tailwind:init`, `tailwind:build` (--watch, --minify)
-  - ✅ **Utils** : `cache:clear`, `routes:list` (affiche toutes les routes)
+  - ✅ **Utils** : `routes:list`
 - ✅ **TERMINÉ** : Architecture modulaire (commandes dans `bin/commands/`)
-- ✅ **TERMINÉ** : Tailwind CLI standalone (sans Node.js, binaire 116 Mo)
+- ✅ **TERMINÉ** : Mode interactif pour make:controller (choix des actions)
+- ✅ **TERMINÉ** : Mode interactif pour make:model (détection types et relations)
+- ✅ **TERMINÉ** : Contraintes auto dans make:form (Email, MinLength)
+- ✅ **TERMINÉ** : Relations bidirectionnelles auto dans make:model
 - 💡 **Amélioration** : Lancer les tests
 - 💡 **Amélioration** : Auto-complétion bash/zsh
+- 💡 **Amélioration** : Commande make:templates (générer les vues)
 
 ### 2. Documentation
 - ✅ Déjà bien documenté
@@ -161,10 +173,10 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
   - ✅ Dashboard et profil utilisateur
   - ✅ Remember Me (connexion persistante)
   - ✅ Formulaires avec contraintes
+- ✅ **TERMINÉ** : `ogan/cache` - Système de cache complet
 - 💡 **Amélioration** : Packages additionnels :
   - `ogan/mail` : Envoi d'emails
   - `ogan/queue` : Files d'attente
-  - `ogan/cache` : Système de cache avancé
 
 ## ⚙️ Configuration
 
@@ -259,23 +271,26 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 
 ## 🎯 Priorités Recommandées
 
-### Court Terme (1-2 mois)
-1. ✅ Relations ORM (OneToMany, ManyToOne)
+### Court Terme (✅ TERMINÉ)
+1. ✅ Relations ORM (OneToMany, ManyToOne, bidirectionnelles)
 2. ✅ Système de migrations
 3. ✅ Helpers de vue (url, route, asset)
 4. ✅ Suite de tests PHPUnit complète (46 tests, 69 assertions)
+5. ✅ Système de cache complet
+6. ✅ CLI améliorée (make:controller interactif, make:model avec relations)
 
-### Moyen Terme (3-6 mois)
-1. ✅ Cache de configuration et routes
-2. ✅ Commandes CLI
-3. ✅ Event Dispatcher
-4. ✅ Documentation API générée
+### Moyen Terme (en cours)
+1. 💡 Event Dispatcher
+2. 💡 Soft Delete
+3. 💡 Pagination intégrée
+4. 💡 make:templates
+5. 💡 make:seeder
 
-### Long Terme (6+ mois)
-1. ✅ Packages additionnels (auth, mail, queue)
-2. ✅ Support GraphQL
-3. ✅ Monitoring avancé
-4. ✅ Application exemple complète
+### Long Terme
+1. 💡 Support GraphQL
+2. 💡 Queue / Jobs
+3. 💡 Monitoring avancé
+4. 💡 Internationalisation (i18n)
 
 ---
 
