@@ -34,6 +34,30 @@ session:
   httponly: true
   samesite: Lax
 
+# Configuration du cache
+cache:
+  driver: file                    # Driver par défaut: file, array
+  path: '%kernel.project_dir%/var/cache/data'
+  default_ttl: 3600               # 1 heure par défaut
+
+  # Stores spécifiques
+  stores:
+    file:
+      path: '%kernel.project_dir%/var/cache/data'
+      ttl: 3600
+    array:
+      ttl: 3600
+
+  # Cache des requêtes (QueryBuilder)
+  queries:
+    enabled: true
+    ttl: 300                      # 5 minutes pour les queries
+
+  # Cache des routes (compilation)
+  routes:
+    enabled: true
+    file: '%kernel.project_dir%/var/cache/routes.php'
+
 # Configuration de l'authentification
 auth:
   # Envoyer un email de vérification à l'inscription

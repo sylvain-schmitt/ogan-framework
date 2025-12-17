@@ -4,28 +4,6 @@
  * Commandes utilitaires
  */
 function registerUtilsCommands($app) {
-    $app->addCommand('cache:clear', function($args) {
-        $projectRoot = dirname(__DIR__, 2);
-        $cacheDir = $projectRoot . '/var/cache/templates';
-        
-        if (!is_dir($cacheDir)) {
-            echo "ℹ️  Aucun cache à vider\n";
-            return 0;
-        }
-        
-        $files = glob($cacheDir . '/*');
-        $count = 0;
-        
-        foreach ($files as $file) {
-            if (is_file($file)) {
-                unlink($file);
-                $count++;
-            }
-        }
-        
-        echo "✅ {$count} fichier(s) de cache supprimé(s)\n";
-        return 0;
-    }, 'Vide le cache des templates');
 
     $app->addCommand('routes:list', function($args) {
     $projectRoot = dirname(__DIR__, 2);

@@ -31,7 +31,8 @@
             "App\\": "src/"
         },
         "files": [
-            "ogan/Debug/helpers.php"
+            "ogan/Debug/helpers.php",
+            "ogan/Cache/helpers.php"
         ]
     },
     "autoload-dev": {

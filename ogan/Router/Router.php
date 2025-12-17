@@ -31,7 +31,99 @@ class Router implements RouterInterface
      */
     private array $groupStack = [];
 
+    /**
+     * Chemin vers le fichier cache des routes
+     */
+    private ?string $cacheFile = null;
+
+    /**
+     * Mode de l'application (dev/prod)
+     */
+    private string $environment = 'dev';
+
     public function loadRoutesFromControllers(string $controllersPath): void
+    {
+        // Détecter l'environnement et le cache
+        $this->detectEnvironment();
+        
+        // En prod, essayer de charger depuis le cache
+        if ($this->environment !== 'dev' && $this->loadFromCache()) {
+            return; // Routes chargées depuis le cache
+        }
+
+        // Sinon, charger par réflexion (dev ou cache manquant)
+        $this->loadRoutesViaReflection($controllersPath);
+
+        // En prod, générer le cache si absent
+        if ($this->environment !== 'dev' && $this->cacheFile && !file_exists($this->cacheFile)) {
+            $this->compileRoutesToCache();
+        }
+    }
+
+    /**
+     * Détecte l'environnement et configure le cache
+     */
+    private function detectEnvironment(): void
+    {
+        // Récupérer depuis la config si disponible
+        if (class_exists(\Ogan\Config\Config::class)) {
+            $this->environment = \Ogan\Config\Config::get('app.env', 'dev');
+            $routeCacheEnabled = \Ogan\Config\Config::get('cache.routes.enabled', true);
+            
+            if ($routeCacheEnabled) {
+                $this->cacheFile = \Ogan\Config\Config::get(
+                    'cache.routes.file', 
+                    dirname(__DIR__, 2) . '/var/cache/routes.php'
+                );
+            }
+        }
+    }
+
+    /**
+     * Charge les routes depuis le fichier cache
+     */
+    private function loadFromCache(): bool
+    {
+        if (!$this->cacheFile || !file_exists($this->cacheFile)) {
+            return false;
+        }
+
+        $cached = require $this->cacheFile;
+        
+        if (!is_array($cached)) {
+            return false;
+        }
+
+        foreach ($cached as $routeData) {
+            $route = new Route(
+                $routeData['path'],
+                $routeData['methods'],
+                $routeData['controller'],
+                $routeData['method'],
+                $routeData['name']
+            );
+            
+            // Restaurer les middlewares
+            if (!empty($routeData['middlewares'])) {
+                foreach ($routeData['middlewares'] as $middleware) {
+                    $route->middleware($middleware);
+                }
+            }
+
+            $this->routes[] = $route;
+
+            if ($routeData['name'] !== null) {
+                $this->namedRoutes[$routeData['name']] = $route;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Charge les routes par réflexion (mode dev ou fallback)
+     */
+    private function loadRoutesViaReflection(string $controllersPath): void
     {
         $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($controllersPath));
 
@@ -78,6 +170,51 @@ class Router implements RouterInterface
                 $loader($this);
             }
         }
+    }
+
+    /**
+     * Compile les routes dans le fichier cache
+     */
+    public function compileRoutesToCache(): bool
+    {
+        if (!$this->cacheFile) {
+            return false;
+        }
+
+        $cacheDir = dirname($this->cacheFile);
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0755, true);
+        }
+
+        $code = "<?php\n\n";
+        $code .= "/**\n";
+        $code .= " * Cache des routes - Généré automatiquement\n";
+        $code .= " * Date: " . date('Y-m-d H:i:s') . "\n";
+        $code .= " * Ne pas modifier manuellement !\n";
+        $code .= " */\n\n";
+        $code .= "return [\n";
+
+        foreach ($this->routes as $route) {
+            $methods = var_export($route->httpMethods, true);
+            $path = var_export($route->path, true);
+            $controller = var_export($route->controllerClass, true);
+            $method = var_export($route->controllerMethod, true);
+            $name = var_export($route->name ?? null, true);
+            $middlewares = var_export($route->getMiddlewares(), true);
+
+            $code .= "    [\n";
+            $code .= "        'methods' => {$methods},\n";
+            $code .= "        'path' => {$path},\n";
+            $code .= "        'controller' => {$controller},\n";
+            $code .= "        'method' => {$method},\n";
+            $code .= "        'name' => {$name},\n";
+            $code .= "        'middlewares' => {$middlewares},\n";
+            $code .= "    ],\n";
+        }
+
+        $code .= "];\n";
+
+        return file_put_contents($this->cacheFile, $code) !== false;
     }
 
     /**

@@ -56,5 +56,9 @@ registerMigrateCommands($app);
 require $commandsDir . '/auth.php';
 registerAuthCommands($app);
 
+// Cache
+require $commandsDir . '/cache.php';
+registerCacheCommands($app);
+
 // Exécuter l'application
 $app->run($argv);

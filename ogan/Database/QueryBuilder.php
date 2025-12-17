@@ -110,6 +110,11 @@ class QueryBuilder
     private array $params = [];
 
     /**
+     * @var int|null TTL du cache en secondes (null = pas de cache)
+     */
+    private ?int $cacheTtl = null;
+
+    /**
      * ═══════════════════════════════════════════════════════════════════
      * CONSTRUCTEUR
      * ═══════════════════════════════════════════════════════════════════
@@ -325,6 +330,29 @@ class QueryBuilder
 
     /**
      * ═══════════════════════════════════════════════════════════════════
+     * ACTIVER LE CACHE POUR CETTE REQUÊTE
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * @param int $ttl Durée du cache en secondes
+     * @return self
+     * 
+     * @example
+     * // Cache la requête pendant 5 minutes
+     * $users = QueryBuilder::table('users')
+     *     ->cache(300)
+     *     ->where('active', '=', true)
+     *     ->get();
+     * 
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function cache(int $ttl): self
+    {
+        $this->cacheTtl = $ttl;
+        return $this;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
      * EXÉCUTER UNE REQUÊTE SELECT ET RÉCUPÉRER TOUS LES RÉSULTATS
      * ═══════════════════════════════════════════════════════════════════
      * 
@@ -335,6 +363,24 @@ class QueryBuilder
     public function get(): array
     {
         $sql = $this->buildSelect();
+        
+        // Si le cache est activé, utiliser le pattern cache-aside
+        if ($this->cacheTtl !== null && function_exists('cache')) {
+            $cacheKey = $this->generateCacheKey($sql);
+            
+            return cache()->remember($cacheKey, $this->cacheTtl, function() use ($sql) {
+                return $this->executeSelect($sql);
+            });
+        }
+        
+        return $this->executeSelect($sql);
+    }
+
+    /**
+     * Exécute la requête SELECT (utilisé par get() et le cache)
+     */
+    private function executeSelect(string $sql): array
+    {
         $stmt = $this->pdo->prepare($sql);
         
         $start = microtime(true);
@@ -347,6 +393,14 @@ class QueryBuilder
         }
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Génère une clé de cache unique pour la requête
+     */
+    private function generateCacheKey(string $sql): string
+    {
+        return 'query.' . md5($sql . serialize($this->params));
     }
 
     /**
