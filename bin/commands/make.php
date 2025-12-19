@@ -1,6 +1,6 @@
 <?php
 
-use Ogan\Console\Generator\{ControllerGenerator, FormGenerator, ModelGenerator, RepositoryGenerator};
+use Ogan\Console\Generator\{ControllerGenerator, FormGenerator, ModelGenerator, RepositoryGenerator, TemplateGenerator};
 use Ogan\Console\Interactive\ModelBuilder;
 
 /**
@@ -38,6 +38,7 @@ function registerMakeCommands($app) {
     $formsPath = $projectRoot . '/src/Form';
     $modelsPath = $projectRoot . '/src/Model';
     $repositoriesPath = $projectRoot . '/src/Repository';
+    $templatesPath = $projectRoot . '/templates';
 
     // make:controller (mode interactif)
     $app->addCommand('make:controller', function($args) use ($controllersPath) {
@@ -122,10 +123,94 @@ function registerMakeCommands($app) {
         echo "📁 Fichier : {$filepath}\n";
         
         // Rappeler de créer les templates
-        echo "\n💡 N'oubliez pas de créer les templates dans templates/" . strtolower(str_replace('Controller', '', $name)) . "/\n";
+        echo "\n💡 N'oubliez pas : php bin/console make:templates " . str_replace('Controller', '', $name) . "\n";
         
         return 0;
     }, 'Génère un contrôleur');
+
+    // make:templates (mode interactif)
+    $app->addCommand('make:templates', function($args) use ($templatesPath, $modelsPath) {
+        if (isHelpRequested($args)) {
+            showMakeHelp('make:templates', 'Génère les templates .ogan pour un contrôleur CRUD.', [
+                '--all' => 'Génère tous les templates sans demander'
+            ]);
+            return 0;
+        }
+        
+        $name = $args[0] ?? null;
+        $force = in_array('--force', $args);
+        $all = in_array('--all', $args);
+        
+        if (!$name) {
+            echo "❌ Nom du modèle/contrôleur requis.\n\n";
+            echo "Usage: php bin/console make:templates <Name> [--force] [--all]\n";
+            echo "Aide:  php bin/console make:templates --help\n";
+            return 1;
+        }
+        
+        echo "🎨 Génération des templates : {$name}\n\n";
+        
+        $templates = [];
+        
+        if (!$all) {
+            echo "📋 Templates disponibles\n";
+            echo "───────────────────────────────────────────────────────────\n";
+            
+            $availableTemplates = [
+                'list'   => 'Liste des éléments (table)',
+                'show'   => 'Détails d\'un élément',
+                'create' => 'Formulaire de création',
+                'edit'   => 'Formulaire d\'édition'
+            ];
+            
+            echo "Tout sélectionner ? (o/n) [o] : ";
+            $handle = fopen("php://stdin", "r");
+            $allResponse = trim(fgets($handle));
+            fclose($handle);
+            
+            if (empty($allResponse) || in_array(strtolower($allResponse), ['o', 'oui', 'y', 'yes'])) {
+                $templates = array_keys($availableTemplates);
+                echo "✅ Tous les templates sélectionnés\n\n";
+            } else {
+                echo "\n";
+                foreach ($availableTemplates as $tpl => $description) {
+                    echo "  {$description} ({$tpl}.ogan) ? (o/n) [o] : ";
+                    $handle = fopen("php://stdin", "r");
+                    $response = trim(fgets($handle));
+                    fclose($handle);
+                    
+                    if (empty($response) || in_array(strtolower($response), ['o', 'oui', 'y', 'yes'])) {
+                        $templates[] = $tpl;
+                        echo "    ✅ {$tpl}.ogan\n";
+                    } else {
+                        echo "    ⏭️  {$tpl}.ogan ignoré\n";
+                    }
+                }
+                echo "\n";
+            }
+            
+            if (empty($templates)) {
+                echo "❌ Aucun template sélectionné. Abandon.\n";
+                return 1;
+            }
+        }
+        
+        $generator = new TemplateGenerator();
+        $files = $generator->generate($name, $templatesPath, $templates, $force, $modelsPath);
+        
+        if (empty($files)) {
+            echo "ℹ️  Aucun template généré (fichiers existants ?). Utilisez --force pour écraser.\n";
+            return 0;
+        }
+        
+        echo "✅ Templates générés :\n";
+        foreach ($files as $file) {
+            echo "   📄 " . basename(dirname($file)) . "/" . basename($file) . "\n";
+        }
+        echo "\n📁 Dossier : " . dirname($files[0]) . "\n";
+        
+        return 0;
+    }, 'Génère les templates .ogan');
 
     // make:model
     $app->addCommand('make:model', function($args) use ($modelsPath, $repositoriesPath) {

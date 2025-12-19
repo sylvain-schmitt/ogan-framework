@@ -97,6 +97,69 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 - ✅ **TERMINÉ** : Configuration `.editorconfig` et guide VS Code
 - 💡 **Amélioration** : Créer une grammaire TextMate pour coloration syntaxique native (compatible VS Code, PhpStorm, Sublime Text)
 
+### 6. Interactivité Frontend (HTMX)
+> 🎯 **Objectif** : Ajouter de l'interactivité moderne sans JavaScript complexe, comme Symfony Turbo/Stimulus.
+
+**Fonctionnalités souhaitées :**
+- 💡 **Rechargement partiel** : Mettre à jour uniquement une partie de la page (ex: liste après ajout)
+- 💡 **Animations** : Transitions CSS automatiques lors des changements de contenu
+- 💡 **Appels fetch** : Requêtes AJAX déclaratives sans écrire de JavaScript
+- 💡 **Formulaires dynamiques** : Soumission sans rechargement complet
+- 💡 **Infinite scroll / Load more** : Pagination dynamique
+
+**Solution proposée : HTMX**
+- ✅ Léger (~14 KB gzippé)
+- ✅ Sans dépendances (vanilla JS)
+- ✅ S'intègre parfaitement avec le rendu serveur (PHP/Ogan)
+- ✅ Courbe d'apprentissage faible
+- ✅ Plus simple que Turbo/Stimulus
+
+**Configuration optionnelle :**
+```yaml
+# config/parameters.yaml
+frontend:
+  htmx:
+    enabled: true          # Activer/désactiver HTMX
+    version: '1.9.10'      # Version à utiliser
+    extensions: []         # Extensions optionnelles (sse, ws, etc.)
+```
+
+**Exemple d'utilisation dans les templates :**
+```html
+<!-- Bouton qui charge du contenu -->
+<button hx-get="/api/users" hx-target="#user-list" hx-swap="innerHTML">
+    Charger les utilisateurs
+</button>
+
+<!-- Formulaire sans rechargement -->
+<form hx-post="/user/store" hx-target="#result" hx-swap="outerHTML">
+    {{ form.row('name') }}
+    {{ form.row('submit') }}
+</form>
+
+<!-- Suppression avec confirmation -->
+<button hx-delete="/user/{{ item.id }}" 
+        hx-confirm="Êtes-vous sûr ?" 
+        hx-target="closest tr" 
+        hx-swap="outerHTML swap:1s">
+    Supprimer
+</button>
+```
+
+**Alternatives considérées :**
+| Solution | Taille | Complexité | Intégration PHP |
+|----------|--------|------------|-----------------|
+| **HTMX** ✅ | 14 KB | Faible | Excellente |
+| Turbo (Symfony) | 50 KB | Moyenne | Bonne |
+| Alpine.js | 15 KB | Faible | Bonne |
+| Unpoly | 40 KB | Moyenne | Excellente |
+
+**Implémentation prévue :**
+1. Helper `htmx()` pour inclure le script conditionnel
+2. Attributs personnalisés dans les composants de formulaire
+3. Middleware pour détecter les requêtes HTMX (`HX-Request` header)
+4. Helpers de réponse (`hx_redirect()`, `hx_trigger()`, `hx_push_url()`)
+5. Extension du TemplateGenerator pour générer des templates HTMX-ready
 
 ## 🚀 Performance
 
