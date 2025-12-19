@@ -7,6 +7,7 @@ use Ogan\View\Helper\FormHelper;
 use Ogan\View\Helper\ViewHelper;
 use Ogan\View\Helper\SessionHelper;
 use Ogan\View\Helper\SecurityHelper;
+use Ogan\View\Helper\AppGlobal;
 
 class View implements ViewInterface
 {
@@ -22,6 +23,7 @@ class View implements ViewInterface
     private ViewHelper $viewHelper;
     private SessionHelper $sessionHelper;
     private SecurityHelper $securityHelper;
+    private AppGlobal $appGlobal;
 
     public function __construct(string $basePath, bool $useCompiler = false, ?string $cacheDir = null)
     {
@@ -33,6 +35,7 @@ class View implements ViewInterface
         $this->viewHelper = new ViewHelper();
         $this->sessionHelper = new SessionHelper();
         $this->securityHelper = new SecurityHelper();
+        $this->appGlobal = new AppGlobal();
 
         if ($useCompiler) {
             $cacheDir = $cacheDir ?? __DIR__ . '/../../var/cache/templates';
@@ -263,6 +266,38 @@ class View implements ViewInterface
         return $this->viewHelper->authInstalled();
     }
 
+    /**
+     * Génère une URL relative depuis un nom de route (alias Symfony)
+     */
+    public function path(string $name, array $params = []): string
+    {
+        return $this->viewHelper->path($name, $params);
+    }
+
+    /**
+     * Retourne l'objet app global (pour app.user, app.session, etc.)
+     */
+    public function app(): AppGlobal
+    {
+        return $this->appGlobal;
+    }
+
+    /**
+     * Définit la requête dans AppGlobal
+     */
+    public function setRequest(\Ogan\Http\RequestInterface $request): void
+    {
+        $this->appGlobal->setRequest($request);
+    }
+
+    /**
+     * Définit l'utilisateur dans AppGlobal
+     */
+    public function setUser(mixed $user): void
+    {
+        $this->appGlobal->setUser($user);
+    }
+
     // SessionHelper
     public function setSession(\Ogan\Session\SessionInterface $session): void
     {
@@ -302,6 +337,14 @@ class View implements ViewInterface
     public function getAllFlashes(): array
     {
         return $this->sessionHelper->getAllFlashes();
+    }
+
+    /**
+     * Alias de getAllFlashes() - Récupère tous les messages flash et les supprime
+     */
+    public function getFlashes(): array
+    {
+        return $this->getAllFlashes();
     }
 
     // SecurityHelper

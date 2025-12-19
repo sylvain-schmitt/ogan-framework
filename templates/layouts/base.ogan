@@ -8,7 +8,11 @@
 		<title>{{ title }}</title>
 
 		<!-- Tailwind CSS compilé -->
-		<link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
+		<link
+		rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
+
+		<!-- HTMX (conditionnel) -->
+		{{ htmx_script() }}
 	</head>
 
 	<body class="min-h-screen flex flex-col bg-gray-50">

@@ -170,7 +170,8 @@ class ExpressionCompiler implements CompilerInterface
         if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $expression)) {
             $noEscapeMethods = [
                 'cssFramework', 'csrf_input', 'section', 'component', 'extend', 'start', 'end',
-                'formStart', 'formEnd', 'formRow', 'formLabel', 'formWidget', 'formErrors', 'formRest'
+                'formStart', 'formEnd', 'formRow', 'formLabel', 'formWidget', 'formErrors', 'formRest',
+                'htmx_script'
             ];
 
             if (in_array($expression, $noEscapeMethods)) {
@@ -202,7 +203,13 @@ class ExpressionCompiler implements CompilerInterface
         // Détecter les méthodes qui retournent du HTML et ne doivent pas être échappées
         $noEscapeMethods = [
             'cssFramework', 'csrf_input', 'section', 'component', 'extend', 'start', 'end',
-            'formStart', 'formEnd', 'formRow', 'formLabel', 'formWidget', 'formErrors', 'formRest'
+            'formStart', 'formEnd', 'formRow', 'formLabel', 'formWidget', 'formErrors', 'formRest',
+            'htmx_script'
+        ];
+
+        // Fonctions globales qui retournent du HTML (pas des méthodes $this->)
+        $noEscapeGlobalFunctions = [
+            'htmx_script', 'htmx_delete', 'htmx_form'
         ];
 
         $isNoEscapeMethod = false;
@@ -210,6 +217,17 @@ class ExpressionCompiler implements CompilerInterface
             if (preg_match('/\$this->' . preg_quote($method, '/') . '\s*\(/', $phpExpression)) {
                 $isNoEscapeMethod = true;
                 break;
+            }
+        }
+
+        // Vérifier les fonctions globales (sans $this->)
+        if (!$isNoEscapeMethod) {
+            foreach ($noEscapeGlobalFunctions as $func) {
+                // Matcher la fonction globale (pas précédée de ->)
+                if (preg_match('/(?<![>\w])' . preg_quote($func, '/') . '\s*\(/', $phpExpression)) {
+                    $isNoEscapeMethod = true;
+                    break;
+                }
             }
         }
 

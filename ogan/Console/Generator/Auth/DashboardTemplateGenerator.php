@@ -12,8 +12,11 @@ use Ogan\Console\Generator\AbstractGenerator;
 
 class DashboardTemplateGenerator extends AbstractGenerator
 {
-    public function generate(string $projectRoot, bool $force = false): array
+    private bool $htmx = false;
+
+    public function generate(string $projectRoot, bool $force = false, bool $htmx = false): array
     {
+        $this->htmx = $htmx;
         $generated = [];
         $skipped = [];
 
@@ -40,7 +43,9 @@ class DashboardTemplateGenerator extends AbstractGenerator
 
     private function getLayoutTemplate(): string
     {
-        return <<<'HTML'
+        $htmxScript = $this->htmx ? "\n    {{ htmx_script() }}" : '';
+
+        return <<<HTML
 {{ title = title ?? 'Dashboard' }}
 <!DOCTYPE html>
 <html lang="fr" class="h-full bg-gray-50">
@@ -50,7 +55,7 @@ class DashboardTemplateGenerator extends AbstractGenerator
     <title>{{ title }} - Delnyx</title>
     <link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
     <!-- Theme Script (in head to avoid FOUC) -->
-    <script src="{{ asset('/assets/js/theme.js') }}"></script>
+    <script src="{{ asset('/assets/js/theme.js') }}"></script>{$htmxScript}
 </head>
 <body class="h-full dark:bg-gray-900 transition-colors duration-200">
 
@@ -85,7 +90,7 @@ HTML;
 
 {{ start('content') }}
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Bienvenue, {{ user.name }}</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Bienvenue, {{ app.user.name }}</h1>
         <p class="text-gray-600 dark:text-gray-300">
             Ceci est votre tableau de bord. Commencez à gérer votre application dès maintenant.
         </p>

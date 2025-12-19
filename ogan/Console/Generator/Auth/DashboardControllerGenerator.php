@@ -133,7 +133,7 @@ class DashboardController extends AbstractController
 
                 $user->save();
 
-                $this->session->setFlash('success', 'Votre profil a été mis à jour avec succès.');
+                $this->addFlash('success', 'Votre profil a été mis à jour avec succès.');
                 return $this->redirect('/profile');
             }
         }

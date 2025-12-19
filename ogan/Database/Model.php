@@ -472,7 +472,30 @@ abstract class Model
      */
     public function __get(string $name): mixed
     {
-        return $this->attributes[$name] ?? null;
+        // 1. Essayer le getter standard (getProperty)
+        $getter = 'get' . ucfirst($name);
+        if (method_exists($this, $getter)) {
+            return $this->$getter();
+        }
+
+        // 2. Essayer le getter booléen (isProperty)
+        $isMethod = 'is' . ucfirst($name);
+        if (method_exists($this, $isMethod)) {
+            return $this->$isMethod();
+        }
+
+        // 3. Essayer l'attribut exact
+        if (array_key_exists($name, $this->attributes)) {
+            return $this->attributes[$name];
+        }
+
+        // 4. Essayer l'attribut en snake_case (createdAt -> created_at)
+        $snakeName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $name));
+        if (array_key_exists($snakeName, $this->attributes)) {
+            return $this->attributes[$snakeName];
+        }
+
+        return null;
     }
 
     /**

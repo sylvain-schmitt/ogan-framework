@@ -61,9 +61,9 @@ cache:
 # Configuration de l'authentification
 auth:
   # Envoyer un email de vérification à l'inscription
-  send_verification_email: true
+  send_verification_email: false
   # Envoyer un email pour le reset de mot de passe
-  send_password_reset_email: true
+  send_password_reset_email: false
   # Redirections après login/logout
   login_redirect: /dashboard
   logout_redirect: /login
@@ -93,3 +93,9 @@ security:
   
   # Page de refus d'accès
   access_denied_url: /login
+
+# Configuration Frontend (JavaScript)
+frontend:
+  htmx:
+    enabled: false                 # HTMX activé
+    script: assets/js/htmx.min.js       # Chemin du script local

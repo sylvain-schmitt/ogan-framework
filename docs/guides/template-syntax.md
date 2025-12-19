@@ -258,17 +258,69 @@ Les méthodes suivantes peuvent être utilisées avec la syntaxe `{{ }}` :
 - `start('name')` - Commence un bloc nommé
 - `end` - Termine le bloc en cours
 
+**URLs et Routes :**
+- `path('name', ['param' => 'value'])` - Génère une **URL relative** depuis un nom de route *(recommandé)*
+- `url('/path', true)` - Génère une **URL absolue**
+- `route('name', ['param' => 'value'])` - Alias de `path()` (compatibilité)
+- `asset('path')` - Génère le chemin vers un asset
+
+> **Convention Symfony** : Utilisez `path()` pour les URLs relatives et `url()` pour les URLs absolues.
+
+```html
+<!-- URL relative (recommandé) -->
+<a href="{{ path('user_show', ['id' => 1]) }}">Voir l'utilisateur</a>
+
+<!-- URL absolue -->
+<a href="{{ url('/users/1', true) }}">Lien absolu</a>
+```
+
+**Variable globale `app` :**
+- `app().user` - Utilisateur connecté
+- `app().session` - Session courante
+- `app().request` - Requête HTTP
+- `app().flashes` - Messages flash
+- `app().debug` - Mode debug (bool)
+- `app().environment` - Environnement (dev/prod)
+
+**Simplification de syntaxe :**
+Vous pouvez omettre les parenthèses `()` pour l'objet `app` et utiliser la notation pointée pour accéder aux propriétés des objets (même si ce sont des méthodes `get...()`).
+
+```html
+<!-- Accès standard -->
+{{ app.user.name }}
+
+<!-- Accès aux dates (formatage automatique d/m/Y H:i) -->
+{{ app.user.createdAt }}
+
+<!-- Filtres chaînés -->
+{{ app.user.name|first|upper }}
+```
+
+```html
+{% if app().user %}
+    Bienvenue {{ app().user.name }}
+{% endif %}
+
+{% if app().session.get('panier') %}
+    Panier : {{ app().session.get('panier')|count }} articles
+{% endif %}
+```
+
 **Affichage :**
 - `section('name')` - Affiche une section (retourne du HTML, **non échappée**)
 - `component('name', ['prop' => 'value'])` - Affiche un composant (retourne du HTML, **non échappée**)
-- `route('name', ['param' => 'value'])` - Génère une URL depuis un nom de route
-- `url('/path', true)` - Génère une URL absolue ou relative
-- `asset('path')` - Génère le chemin vers un asset
 - `css('path')` - Génère une balise `<link>` CSS
 - `js('path')` - Génère une balise `<script>` JS
 - `cssFramework()` - Génère les balises du framework CSS configuré (retourne du HTML, **non échappée**)
 - `csrf_token()` - Retourne le token CSRF
 - `csrf_input()` - Génère un champ caché avec le token CSRF (retourne du HTML, **non échappée**)
+- `htmx_script()` - Génère la balise script HTMX si activé (retourne du HTML, **non échappée**)
+
+**Fonctions globales :**
+- `authInstalled()` - Vérifie si le module d'authentification est installé
+- `htmx_enabled()` - Vérifie si HTMX est activé
+- `htmx_request()` - Vérifie si c'est une requête HTMX
+
 
 
 ### 🤔 Pourquoi certaines méthodes ne sont pas échappées ?

@@ -3,7 +3,7 @@
 		<div
 			class="flex justify-between items-center h-16">
 			<!-- Logo -->
-			<a href="/" class="flex items-center space-x-2">
+			<a href="{{ route('hello_index') }}" class="flex items-center space-x-2">
 				<span class="text-2xl">🚀</span>
 				<span class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Ogan</span>
 			</a>
@@ -16,11 +16,11 @@
 
 			<!-- CTA Buttons -->
 			<div class="flex items-center space-x-3">
-				{% if $this->authInstalled() %}
-					<a href="/login" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+				{% if authInstalled() %}
+					<a href="{{ path('login') }}" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
 						Connexion
 					</a>
-					<a href="/register" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">
+					<a href="{{ path('register') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">
 						Inscription
 					</a>
 				{% else %}

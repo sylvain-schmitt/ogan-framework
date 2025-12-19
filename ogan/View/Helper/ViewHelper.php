@@ -100,12 +100,17 @@ class ViewHelper
     /**
      * Échappe une chaîne pour l'affichage (XSS Protection)
      */
-    public function escape(?string $value): string
+    public function escape(mixed $value): string
     {
         if ($value === null) {
             return '';
         }
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+        
+        if ($value instanceof \DateTimeInterface) {
+            return htmlspecialchars($value->format('d/m/Y H:i'), ENT_QUOTES, 'UTF-8');
+        }
+
+        return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
     }
 
     /**
@@ -131,5 +136,15 @@ class ViewHelper
     public function authInstalled(): bool
     {
         return $this->hasRoute('security_login');
+    }
+
+    /**
+     * Génère une URL relative depuis un nom de route (alias Symfony)
+     * 
+     * Usage: path('user_show', ['id' => 1]) → /user/1
+     */
+    public function path(string $name, array $params = []): string
+    {
+        return $this->route($name, $params, false);
     }
 }

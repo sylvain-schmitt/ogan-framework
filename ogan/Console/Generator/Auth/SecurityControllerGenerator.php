@@ -79,7 +79,7 @@ class SecurityController extends AbstractController
     // 🔐 LOGIN
     // ═══════════════════════════════════════════════════════════════════
     
-    #[Route(path: '/login', methods: ['GET', 'POST'], name: 'security_login')]
+    #[Route(path: '/login', methods: ['GET', 'POST'], name: 'login')]
     public function login()
     {
         if ($this->authenticator->isLoggedIn($this->session)) {
@@ -99,17 +99,22 @@ class SecurityController extends AbstractController
                 $user = $this->authenticator->attempt($data['email'], $data['password']);
 
                 if ($user) {
-                    $this->authenticator->login($user, $this->session);
-                    
-                    // Handle remember me
-                    if (!empty($data['remember_me'])) {
-                        $this->rememberMe->createToken($user->id);
+                    // Vérifier si l'email doit être validé
+                    if (Config::get('auth.send_verification_email', false) && !$user->isVerified()) {
+                        $form->addError('email', 'Veuillez vérifier votre adresse email avant de vous connecter.');
+                    } else {
+                        $this->authenticator->login($user, $this->session);
+                        
+                        // Handle remember me
+                        if (!empty($data['remember_me'])) {
+                            $this->rememberMe->createToken($user->id);
+                        }
+                        
+                        return $this->redirect(Config::get('auth.login_redirect', '/dashboard'));
                     }
-                    
-                    return $this->redirect(Config::get('auth.login_redirect', '/dashboard'));
+                } else {
+                    $form->addError('email', 'Email ou mot de passe incorrect.');
                 }
-                
-                $form->addError('email', 'Email ou mot de passe incorrect.');
             }
         }
 
@@ -124,7 +129,7 @@ class SecurityController extends AbstractController
     // 🚪 LOGOUT
     // ═══════════════════════════════════════════════════════════════════
     
-    #[Route(path: '/logout', methods: ['GET'], name: 'security_logout')]
+    #[Route(path: '/logout', methods: ['GET'], name: 'logout')]
     public function logout()
     {
         $user = $this->authenticator->getUser($this->session);
@@ -141,7 +146,7 @@ class SecurityController extends AbstractController
     // 📝 REGISTER
     // ═══════════════════════════════════════════════════════════════════
     
-    #[Route(path: '/register', methods: ['GET', 'POST'], name: 'security_register')]
+    #[Route(path: '/register', methods: ['GET', 'POST'], name: 'register')]
     public function register()
     {
         if ($this->authenticator->isLoggedIn($this->session)) {
@@ -164,12 +169,12 @@ class SecurityController extends AbstractController
                 
                 if ($requireVerification) {
                     $this->verificationService->sendVerification($user);
-                    $this->session->setFlash('success', 'Compte créé ! Vérifiez votre email pour activer votre compte.');
+                    $this->addFlash('success', 'Compte créé ! Vérifiez votre email pour activer votre compte.');
                     return $this->redirect('/login');
                 }
                 
                 $this->authenticator->login($user, $this->session);
-                $this->session->setFlash('success', 'Compte créé avec succès !');
+                $this->addFlash('success', 'Compte créé avec succès !');
                 return $this->redirect(Config::get('auth.login_redirect', '/dashboard'));
             }
         }
@@ -184,17 +189,17 @@ class SecurityController extends AbstractController
     // ✉️ VERIFY EMAIL
     // ═══════════════════════════════════════════════════════════════════
     
-    #[Route(path: '/verify-email/{token}', methods: ['GET'], name: 'security_verify_email')]
+    #[Route(path: '/verify-email/{token}', methods: ['GET'], name: 'verify_email')]
     public function verifyEmail(string $token)
     {
         $user = $this->verificationService->verify($token);
         
         if (!$user) {
-            $this->session->setFlash('error', 'Lien de vérification invalide ou expiré.');
+            $this->addFlash('error', 'Lien de vérification invalide ou expiré.');
             return $this->redirect('/login');
         }
         
-        $this->session->setFlash('success', 'Email vérifié avec succès ! Vous pouvez maintenant vous connecter.');
+        $this->addFlash('success', 'Email vérifié avec succès ! Vous pouvez maintenant vous connecter.');
         return $this->redirect('/login');
     }
 
@@ -202,13 +207,13 @@ class SecurityController extends AbstractController
     // 🔑 FORGOT PASSWORD
     // ═══════════════════════════════════════════════════════════════════
     
-    #[Route(path: '/forgot-password', methods: ['GET', 'POST'], name: 'security_forgot_password')]
+    #[Route(path: '/forgot-password', methods: ['GET', 'POST'], name: 'forgot_password')]
     public function forgotPassword()
     {
         // Vérifier si la fonctionnalité de reset password est activée
         $resetEnabled = Config::get('auth.send_password_reset_email', false);
         if (!$resetEnabled) {
-            $this->session->setFlash('error', 'La réinitialisation du mot de passe n\'est pas disponible.');
+            $this->addFlash('error', 'La réinitialisation du mot de passe n\'est pas disponible.');
             return $this->redirect('/login');
         }
 
@@ -236,12 +241,12 @@ class SecurityController extends AbstractController
                         $this->resetService->sendResetEmail($user);
                     }
                     // Always show success to prevent email enumeration
-                    $this->session->setFlash('success', 'Si cet email existe, un lien de réinitialisation a été envoyé.');
+                    $this->addFlash('success', 'Si cet email existe, un lien de réinitialisation a été envoyé.');
                     return $this->redirect('/login');
                 } else {
                     // Direct mode
                     if ($this->resetService->resetPasswordDirect($data['email'], $data['new_password'])) {
-                        $this->session->setFlash('success', 'Mot de passe modifié avec succès !');
+                        $this->addFlash('success', 'Mot de passe modifié avec succès !');
                         return $this->redirect('/login');
                     }
                     $form->addError('email', 'Aucun compte associé à cet email.');
@@ -261,13 +266,13 @@ class SecurityController extends AbstractController
     // 🔑 RESET PASSWORD (with token from email)
     // ═══════════════════════════════════════════════════════════════════
     
-    #[Route(path: '/reset-password/{token}', methods: ['GET', 'POST'], name: 'security_reset_password')]
+    #[Route(path: '/reset-password/{token}', methods: ['GET', 'POST'], name: 'reset_password')]
     public function resetPassword(string $token)
     {
         $user = $this->resetService->validateToken($token);
         
         if (!$user) {
-            $this->session->setFlash('error', 'Lien de réinitialisation invalide ou expiré.');
+            $this->addFlash('error', 'Lien de réinitialisation invalide ou expiré.');
             return $this->redirect('/forgot-password');
         }
 
@@ -283,7 +288,7 @@ class SecurityController extends AbstractController
                 $data = $form->getData();
                 
                 if ($this->resetService->resetPassword($user, $data['password'])) {
-                    $this->session->setFlash('success', 'Mot de passe modifié avec succès !');
+                    $this->addFlash('success', 'Mot de passe modifié avec succès !');
                     return $this->redirect('/login');
                 }
             }

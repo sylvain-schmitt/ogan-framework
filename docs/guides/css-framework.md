@@ -4,291 +4,133 @@
 
 ## 📋 Vue d'ensemble
 
-Ogan Framework supporte plusieurs frameworks CSS et permet une configuration flexible via `config/parameters.php` ou `.env`.
+Ogan Framework intègre nativement **Tailwind CSS v4** via un binaire autonome (standalone CLI), vous permettant de compiler votre CSS sans avoir besoin d'installer Node.js ou NPM.
 
-**Framework par défaut :** Tailwind CSS (via CDN)
+Vous pouvez également utiliser d'autres frameworks (Bootstrap, Custom) via configuration.
 
----
+## 🚀 Tailwind CSS (Natif)
 
-## ⚙️ Configuration
+C'est la méthode recommandée. Le framework gère le téléchargement du binaire et la compilation.
 
-### Dans `config/parameters.php`
+### Configuration (`config/parameters.yaml`)
 
-```php
-'css_framework' => [
-    'provider' => 'tailwind',  // tailwind, bootstrap, custom, none
-    'version' => '3.4.0',      // Version du framework (si applicable)
-    'cdn' => true,             // Utiliser le CDN (true) ou fichiers locaux (false)
-    'custom_css' => [],        // Fichiers CSS personnalisés additionnels
-],
+```yaml
+css_framework:
+  provider: tailwind
+  version: 4.0.0
+  cdn: false  # false = utilisation du compilateur local
+
+tailwind:
+  input: assets/css/app.css        # Fichier source
+  output: public/assets/css/app.css # Fichier compilé
+  minify: false                     # Minification pour prod
 ```
 
-### Dans `.env` (Optionnel)
+### Installation & Compilation
 
-```env
-CSS_FRAMEWORK_PROVIDER=tailwind
-CSS_FRAMEWORK_VERSION=3.4.0
-CSS_FRAMEWORK_CDN=true
+Le CLI du framework fournit des commandes dédiées :
+
+```bash
+# 1. Initialiser (télécharge le binaire si nécessaire)
+php bin/console tailwind:init
+
+# 2. Compiler (One-shot)
+php bin/console tailwind:build
+
+# 3. Compiler en mode Watch (développement)
+php bin/console tailwind:build --watch
+
+# 4. Compiler pour la production (minifié)
+php bin/console tailwind:build --minify
 ```
 
----
+### Utilisation dans les templates
 
-## 🎨 Frameworks Supportés
+Le layout par défaut inclut déjà l'asset compilé :
 
-### 1. Tailwind CSS (Par Défaut)
-
-**Configuration :**
-```php
-'css_framework' => [
-    'provider' => 'tailwind',
-    'cdn' => true,  // Utilise le CDN Tailwind
-],
-```
-
-**Utilisation dans les templates :**
-```php
-// Le layout de base inclut automatiquement Tailwind
-<?php $this->extend('layouts/base'); ?>
-
-// Utilisez les classes Tailwind directement
-<div class="bg-blue-500 text-white p-4 rounded-lg">
-    Contenu
-</div>
-```
-
-**Fichiers locaux (si `cdn => false`) :**
-- Placez votre CSS compilé dans `public/assets/css/tailwind.css`
-- Configurez `'cdn' => false` dans la config
-
----
-
-### 2. Bootstrap 5
-
-**Configuration :**
-```php
-'css_framework' => [
-    'provider' => 'bootstrap',
-    'version' => '5.3.2',
-    'cdn' => true,
-],
-```
-
-**Utilisation dans les templates :**
-```php
-// Utilisez les classes Bootstrap
-<div class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <button class="btn btn-primary">Cliquer</button>
-        </div>
-    </div>
-</div>
-```
-
----
-
-### 3. CSS Personnalisé
-
-**Configuration :**
-```php
-'css_framework' => [
-    'provider' => 'custom',
-    'custom_css' => [
-        'assets/css/main.css',
-        'assets/css/components.css',
-    ],
-],
-```
-
-**Utilisation :**
-- Placez vos fichiers CSS dans `public/assets/css/`
-- Ils seront automatiquement inclus dans le layout
-
----
-
-### 4. Aucun Framework
-
-**Configuration :**
-```php
-'css_framework' => [
-    'provider' => 'none',
-],
-```
-
-**Utilisation :**
-- Aucun framework CSS n'est inclus
-- Utilisez uniquement votre CSS personnalisé via `custom_css`
-
----
-
-## 🔧 Utilisation dans les Templates
-
-### Layout de Base
-
-Le layout `templates/layouts/base.html.php` inclut automatiquement le framework CSS configuré :
-
-```php
-<?php $title = $title ?? 'Mon site'; ?>
-<!DOCTYPE html>
-<html lang="fr">
+```html
+<!-- templates/layouts/base.ogan -->
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title) ?></title>
-    
-    <?= $this->cssFramework() ?>  <!-- ← Inclut le framework configuré -->
-    
-    <!-- CSS personnalisé additionnel -->
-    <link rel="stylesheet" href="<?= $this->asset('assets/css/style.css') ?>">
-</head>
-<body>
     <!-- ... -->
-</body>
-</html>
+    <link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
+</head>
 ```
 
-### Helper dans View
+Vous pouvez utiliser les classes Tailwind directement dans vos fichiers `.ogan` :
 
-Vous pouvez aussi utiliser le helper directement dans vos templates :
-
-```php
-<?= $this->cssFramework() ?>
-```
-
----
-
-## 📝 Exemples de Templates
-
-### Avec Tailwind CSS (Par Défaut)
-
-```php
-<?php $this->extend('layouts/base'); ?>
-
-<?php $this->start('body'); ?>
-<div class="max-w-4xl mx-auto p-6">
-    <h1 class="text-3xl font-bold text-gray-800 mb-4">Titre</h1>
-    <div class="bg-white rounded-lg shadow-lg p-6">
-        <p class="text-gray-600">Contenu</p>
-    </div>
+```html
+<div class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+    Bouton
 </div>
-<?php $this->end(); ?>
-```
-
-### Avec Bootstrap
-
-```php
-<?php $this->extend('layouts/base'); ?>
-
-<?php $this->start('body'); ?>
-<div class="container">
-    <h1 class="display-4">Titre</h1>
-    <div class="card">
-        <div class="card-body">
-            <p>Contenu</p>
-        </div>
-    </div>
-</div>
-<?php $this->end(); ?>
 ```
 
 ---
 
-## 🎯 Changer de Framework
+## 🌐 Autres Frameworks (CDN)
 
-### Méthode 1 : Via `config/parameters.php`
+Si vous ne souhaitez pas de compilation, vous pouvez utiliser des versions CDN.
 
-1. Ouvrez `config/parameters.php`
-2. Modifiez la section `css_framework` :
+### Configuration
 
-```php
-'css_framework' => [
-    'provider' => 'bootstrap',  // Changez ici
-    'version' => '5.3.2',
-    'cdn' => true,
-],
+Dans `config/parameters.yaml` :
+
+```yaml
+css_framework:
+  provider: bootstrap  # ou 'tailwind' pour CDN
+  version: 5.3.2
+  cdn: true            # Force l'utilisation du CDN
 ```
 
-3. Mettez à jour vos templates pour utiliser les classes du nouveau framework
+### Helper de Vue
 
-### Méthode 2 : Via `.env`
+Utilisez `{{ cssFramework() }}` dans votre `<head>` pour insérer automatiquement le lien CDN approprié :
 
-```env
-CSS_FRAMEWORK_PROVIDER=bootstrap
-CSS_FRAMEWORK_VERSION=5.3.2
-CSS_FRAMEWORK_CDN=true
+```html
+<head>
+    <title>{{ title }}</title>
+    {{ cssFramework() }}
+</head>
 ```
 
----
-
-## 🚀 Installation de Tailwind CSS (Fichiers Locaux)
-
-Si vous préférez compiler Tailwind localement au lieu d'utiliser le CDN :
-
-### 1. Installer Tailwind CSS
-
-```bash
-npm install -D tailwindcss
-npx tailwindcss init
-```
-
-### 2. Configurer `tailwind.config.js`
-
-```js
-module.exports = {
-  content: [
-    "./templates/**/*.html.php",
-    "./src/**/*.php",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-```
-
-### 3. Créer `public/assets/css/tailwind.css`
-
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-```
-
-### 4. Compiler
-
-```bash
-npx tailwindcss -i ./public/assets/css/tailwind.css -o ./public/assets/css/tailwind.min.css --minify
-```
-
-### 5. Configurer le Framework
-
-```php
-'css_framework' => [
-    'provider' => 'tailwind',
-    'cdn' => false,  // Utiliser les fichiers locaux
-],
+**Résultat (Bootstrap) :**
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 ```
 
 ---
 
-## 📚 Ressources
+## 🔧 CSS Personnalisé
 
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [Bootstrap 5 Documentation](https://getbootstrap.com/docs/5.3/)
-- [CDN Tailwind](https://cdn.tailwindcss.com)
-- [CDN Bootstrap](https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/)
+Si vous utilisez votre propre CSS sans framework :
 
----
+```yaml
+css_framework:
+  provider: none
+```
 
-## ✅ Checklist
+Ajoutez simplement vos fichiers CSS dans le dossier `public/assets/css/` et liez-les via le helper `asset()` :
 
-- [ ] Framework CSS configuré dans `config/parameters.php`
-- [ ] Layout de base utilise `$this->cssFramework()`
-- [ ] Templates utilisent les classes du framework choisi
-- [ ] CSS personnalisé ajouté si nécessaire
-- [ ] Responsive design testé
+```html
+<link rel="stylesheet" href="{{ asset('/assets/css/style.css') }}">
+```
 
 ---
 
-**Le framework CSS est maintenant configuré et prêt à être utilisé !** 🎨
+## 📚 Résumé des Commandes
 
+| Commande | Description |
+|----------|-------------|
+| `php bin/console tailwind:init` | Initialise Tailwind (télécharge binaire) |
+| `php bin/console tailwind:build` | Compile le CSS une fois |
+| `php bin/console tailwind:build --watch` | Compile et surveille les changements |
+| `php bin/console tailwind:build --minify` | Compile et minifie pour la prod |
+
+---
+
+## ✅ Checklist Production
+
+Pour déployer en production :
+
+1. Configurer `minify: true` dans `parameters.yaml` (ou via surcharge en prod).
+2. Exécuter `php bin/console tailwind:build --minify` lors du déploiement.
+3. Vider le cache : `php bin/console cache:clear`.

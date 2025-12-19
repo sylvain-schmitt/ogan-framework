@@ -32,7 +32,8 @@
         },
         "files": [
             "ogan/Debug/helpers.php",
-            "ogan/Cache/helpers.php"
+            "ogan/Cache/helpers.php",
+            "ogan/View/Helper/htmx_helpers.php"
         ]
     },
     "autoload-dev": {

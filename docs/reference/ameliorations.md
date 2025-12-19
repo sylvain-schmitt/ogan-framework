@@ -11,7 +11,7 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 
 ### 2. Protection XSS
 - ✅ Échappement dans les vues
-- 💡 **Amélioration** : Ajouter un helper `e()` global dans les templates
+- ✅ **TERMINÉ** : Helper `e()` global dans les templates (avec formatage de dates auto)
 - 💡 **Amélioration** : Validation stricte des entrées utilisateur
 
 ### 3. Rate Limiting
@@ -31,6 +31,7 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 - ✅ **TERMINÉ** : Lazy loading (par défaut)
 - ✅ **TERMINÉ** : Génération automatique des relations inverses
 - ✅ **TERMINÉ** : Détection automatique des relations via les noms de propriétés
+- ✅ **TERMINÉ** : Accès intelligent aux propriétés (`Model::__get` priorise les getters)
 - 💡 **Amélioration** : Eager loading
 - 💡 **Amélioration** : Support des relations polymorphiques
 
@@ -59,6 +60,8 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 ### 1. Helpers de Vue
 - ✅ **TERMINÉ** : Helpers pour les URLs (`url()`, `route()`)
 - ✅ **TERMINÉ** : Helpers pour les assets (`asset()`, `css()`, `js()`)
+- ✅ **TERMINÉ** : Variable globale `app` simplifiée (`app.user`, `app.request`)
+- ✅ **TERMINÉ** : Formatage automatique des dates dans `e()`
 - 💡 **Amélioration** : Helpers pour les formulaires (`form()`, `input()`, etc.)
 
 ### 2. Internationalisation (i18n)
@@ -77,18 +80,10 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 ### 4. Refactorisation du Compilateur de Templates
 - ✅ **TERMINÉ** : Refactorisation complète du `TemplateCompiler` selon les principes SOLID
 - ✅ **TERMINÉ** : Réduction de 92,5% du code (de 2538 à 190 lignes)
-- ✅ **TERMINÉ** : Séparation des responsabilités en classes spécialisées :
-  - `ExpressionCompiler` : Compilation des expressions `{{ }}`
-  - `ExpressionParser` : Parsing et transformation des expressions
-  - `ControlStructureCompiler` : Compilation des structures de contrôle (if, foreach, etc.)
-  - `VariableTransformer` : Transformation des variables (ajout de `$`)
-  - `VariableProtector` : Protection des variables PHP existantes
-  - `DotSyntaxTransformer` : Transformation de la syntaxe point (`.`) en flèche (`->`)
-  - `StringProtector` : Protection des chaînes de caractères
-  - `PlaceholderManager` : Gestion des placeholders
-  - `PhpKeywordChecker` : Vérification des mots-clés PHP
-- ✅ **TERMINÉ** : Architecture modulaire et extensible
-- ✅ **TERMINÉ** : Code plus maintenable et testable
+- ✅ **TERMINÉ** : Syntaxe moderne `{{ var }}` et `{% if %}` (style Twig)
+- ✅ **TERMINÉ** : Support syntaxe point (`user.name` -> `getUser()->getName()`)
+- ✅ **TERMINÉ** : Support syntaxe chaînée (`user|upper`)
+- ✅ **TERMINÉ** : Architecture modulaire (ExpressionCompiler, DotSyntaxTransformer, etc.)
 - 💡 **Amélioration** : Tests unitaires pour chaque composant du compilateur
 
 ### 5. Extension personnalisée `.ogan`
@@ -98,68 +93,12 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 - 💡 **Amélioration** : Créer une grammaire TextMate pour coloration syntaxique native (compatible VS Code, PhpStorm, Sublime Text)
 
 ### 6. Interactivité Frontend (HTMX)
-> 🎯 **Objectif** : Ajouter de l'interactivité moderne sans JavaScript complexe, comme Symfony Turbo/Stimulus.
-
-**Fonctionnalités souhaitées :**
-- 💡 **Rechargement partiel** : Mettre à jour uniquement une partie de la page (ex: liste après ajout)
-- 💡 **Animations** : Transitions CSS automatiques lors des changements de contenu
-- 💡 **Appels fetch** : Requêtes AJAX déclaratives sans écrire de JavaScript
-- 💡 **Formulaires dynamiques** : Soumission sans rechargement complet
-- 💡 **Infinite scroll / Load more** : Pagination dynamique
-
-**Solution proposée : HTMX**
-- ✅ Léger (~14 KB gzippé)
-- ✅ Sans dépendances (vanilla JS)
-- ✅ S'intègre parfaitement avec le rendu serveur (PHP/Ogan)
-- ✅ Courbe d'apprentissage faible
-- ✅ Plus simple que Turbo/Stimulus
-
-**Configuration optionnelle :**
-```yaml
-# config/parameters.yaml
-frontend:
-  htmx:
-    enabled: true          # Activer/désactiver HTMX
-    version: '1.9.10'      # Version à utiliser
-    extensions: []         # Extensions optionnelles (sse, ws, etc.)
-```
-
-**Exemple d'utilisation dans les templates :**
-```html
-<!-- Bouton qui charge du contenu -->
-<button hx-get="/api/users" hx-target="#user-list" hx-swap="innerHTML">
-    Charger les utilisateurs
-</button>
-
-<!-- Formulaire sans rechargement -->
-<form hx-post="/user/store" hx-target="#result" hx-swap="outerHTML">
-    {{ form.row('name') }}
-    {{ form.row('submit') }}
-</form>
-
-<!-- Suppression avec confirmation -->
-<button hx-delete="/user/{{ item.id }}" 
-        hx-confirm="Êtes-vous sûr ?" 
-        hx-target="closest tr" 
-        hx-swap="outerHTML swap:1s">
-    Supprimer
-</button>
-```
-
-**Alternatives considérées :**
-| Solution | Taille | Complexité | Intégration PHP |
-|----------|--------|------------|-----------------|
-| **HTMX** ✅ | 14 KB | Faible | Excellente |
-| Turbo (Symfony) | 50 KB | Moyenne | Bonne |
-| Alpine.js | 15 KB | Faible | Bonne |
-| Unpoly | 40 KB | Moyenne | Excellente |
-
-**Implémentation prévue :**
-1. Helper `htmx()` pour inclure le script conditionnel
-2. Attributs personnalisés dans les composants de formulaire
-3. Middleware pour détecter les requêtes HTMX (`HX-Request` header)
-4. Helpers de réponse (`hx_redirect()`, `hx_trigger()`, `hx_push_url()`)
-5. Extension du TemplateGenerator pour générer des templates HTMX-ready
+- ✅ **TERMINÉ** : Intégration native dans le framework
+- ✅ **TERMINÉ** : Helper `htmx_script()` pour l'inclusion conditionnelle
+- ✅ **TERMINÉ** : Détection `isHtmx()` dans Request
+- ✅ **TERMINÉ** : Support `--htmx` dans `make:auth`
+- ✅ **TERMINÉ** : Documentation dédiée (`docs/guides/htmx.md`)
+- 💡 **Amélioration** : Helpers de réponse (`hx_redirect()`, `hx_trigger()`, `hx_push_url()`)
 
 ## 🚀 Performance
 
@@ -210,7 +149,7 @@ frontend:
 
 ### 1. CLI
 - ✅ **TERMINÉ** : Système console unifié (`bin/console`) avec 16+ commandes :
-  - ✅ **Make** : `make:controller` (interactif), `make:model`, `make:form`, `make:all`, `make:migration`
+  - ✅ **Make** : `make:controller` (interactif), `make:model`, `make:form`, `make:all`, `make:migration`, `make:auth`
   - ✅ **Migrate** : `migrate`, `migrate:rollback`, `migrate:status`, `migrate:make`, `migrate:diff`
   - ✅ **Cache** : `cache:clear`, `cache:stats`, `cache:routes`, `cache:gc`
   - ✅ **Tailwind** : `tailwind:init`, `tailwind:build` (--watch, --minify)
@@ -234,6 +173,8 @@ frontend:
 - ✅ **TERMINÉ** : `make:auth` - Système d'authentification complet
   - ✅ Login/Register/Logout
   - ✅ Dashboard et profil utilisateur
+  - ✅ Email verification & Password Reset
+  - ✅ Support HTMX optionnel
   - ✅ Remember Me (connexion persistante)
   - ✅ Formulaires avec contraintes
 - ✅ **TERMINÉ** : `ogan/cache` - Système de cache complet
@@ -321,6 +262,7 @@ frontend:
 ## 🎓 Pédagogie
 
 ### 1. Exemples
+- ✅ **TERMINÉ** : Application de démo HTMX
 - 💡 **Amélioration** : Application exemple complète (blog, e-commerce)
 - 💡 **Amélioration** : Tutoriels pas à pas
 - 💡 **Amélioration** : Vidéos explicatives
@@ -337,10 +279,11 @@ frontend:
 ### Court Terme (✅ TERMINÉ)
 1. ✅ Relations ORM (OneToMany, ManyToOne, bidirectionnelles)
 2. ✅ Système de migrations
-3. ✅ Helpers de vue (url, route, asset)
+3. ✅ Helpers de vue (url, route, asset, app.user)
 4. ✅ Suite de tests PHPUnit complète (46 tests, 69 assertions)
 5. ✅ Système de cache complet
-6. ✅ CLI améliorée (make:controller interactif, make:model avec relations)
+6. ✅ CLI améliorée (make:controller interactif, make:model avec relations, make:auth --htmx)
+7. ✅ Intégration HTMX native
 
 ### Moyen Terme (en cours)
 1. 💡 Event Dispatcher

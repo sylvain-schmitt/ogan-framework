@@ -99,7 +99,7 @@ class FilterTransformer
         if ($filterName === 'first') {
             // Pour l'instant on suppose que c'est une chaîne, comme demandé pour user.name|first
             // Si on voulait supporter les tableaux, il faudrait une fonction helper qui vérifie le type à l'exécution
-            return 'substr(' . $value . ', 0, 1)';
+            return 'substr(strval(' . $value . '), 0, 1)';
         }
         
         if ($filterName === 'date') {

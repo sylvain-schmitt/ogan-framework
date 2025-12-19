@@ -13,7 +13,10 @@
  * -------------
  * 
  * $generator = new TemplateGenerator();
- * $generator->generate('Product', 'templates', ['list', 'show', 'create', 'edit']);
+ * $generator->generate('Product', 'templates', ['list', 'show', 'create', 'edit'], false, null, false);
+ * 
+ * Avec HTMX :
+ * $generator->generate('Product', 'templates', ['list'], false, null, true);
  * 
  * ═══════════════════════════════════════════════════════════════════════
  */
@@ -39,6 +42,7 @@ class TemplateGenerator extends AbstractGenerator
      * @param array $templates Templates à générer (vide = tous)
      * @param bool $force Forcer la création même si le fichier existe
      * @param string|null $modelsPath Chemin vers les modèles (pour analyser les propriétés)
+     * @param bool $htmx Générer avec support HTMX
      * @return array Chemins des fichiers créés
      * 
      * ═══════════════════════════════════════════════════════════════════
@@ -48,7 +52,8 @@ class TemplateGenerator extends AbstractGenerator
         string $templatesPath, 
         array $templates = [], 
         bool $force = false,
-        ?string $modelsPath = null
+        ?string $modelsPath = null,
+        bool $htmx = false
     ): array {
         // Si aucun template spécifié, générer tous
         if (empty($templates)) {
@@ -75,8 +80,8 @@ class TemplateGenerator extends AbstractGenerator
             }
             
             $content = match ($template) {
-                'list' => $this->generateListTemplate($className, $routeName, $properties),
-                'show' => $this->generateShowTemplate($className, $routeName, $properties),
+                'list' => $this->generateListTemplate($className, $routeName, $properties, $htmx),
+                'show' => $this->generateShowTemplate($className, $routeName, $properties, $htmx),
                 'create' => $this->generateFormTemplate($className, $routeName, 'create'),
                 'edit' => $this->generateFormTemplate($className, $routeName, 'edit'),
                 default => ''
@@ -125,7 +130,7 @@ class TemplateGenerator extends AbstractGenerator
      * GÉNÉRER LE TEMPLATE LIST
      * ═══════════════════════════════════════════════════════════════════
      */
-    private function generateListTemplate(string $className, string $routeName, array $properties): string
+    private function generateListTemplate(string $className, string $routeName, array $properties, bool $htmx = false): string
     {
         $pluralName = $routeName . 's';
         $displayProperties = $this->getDisplayProperties($properties);
@@ -145,24 +150,44 @@ class TemplateGenerator extends AbstractGenerator
             $cells .= "                    <td class=\"px-6 py-4 whitespace-nowrap text-sm text-gray-500\">{{ item.{$name} }}</td>\n";
         }
 
+        // Action de suppression (HTMX ou classique)
+        if ($htmx) {
+            $deleteAction = <<<HTMX
+                        <a href="{{ path('{$routeName}_show', ['id' => item.id]) }}" class="text-blue-600 hover:text-blue-900 mr-3">Voir</a>
+                        <a href="{{ path('{$routeName}_edit', ['id' => item.id]) }}" class="text-yellow-600 hover:text-yellow-900 mr-3">Éditer</a>
+                        <button hx-delete="{{ path('{$routeName}_delete', ['id' => item.id]) }}"
+                                hx-target="#row-{{ item.id }}"
+                                hx-swap="outerHTML swap:0.3s"
+                                hx-confirm="Êtes-vous sûr de vouloir supprimer cet élément ?"
+                                class="text-red-600 hover:text-red-900 cursor-pointer">
+                            Supprimer
+                        </button>
+HTMX;
+            $rowId = ' id="row-{{ item.id }}"';
+        } else {
+            $deleteAction = <<<CLASSIC
+                        <a href="{{ path('{$routeName}_show', ['id' => item.id]) }}" class="text-blue-600 hover:text-blue-900 mr-3">Voir</a>
+                        <a href="{{ path('{$routeName}_edit', ['id' => item.id]) }}" class="text-yellow-600 hover:text-yellow-900 mr-3">Éditer</a>
+                        <form action="{{ path('{$routeName}_delete', ['id' => item.id]) }}" method="POST" class="inline" onsubmit="return confirm('Êtes-vous sûr ?')">
+                            <button type="submit" class="text-red-600 hover:text-red-900">Supprimer</button>
+                        </form>
+CLASSIC;
+            $rowId = '';
+        }
+
         return <<<OGAN
-{% extends 'layouts/base.ogan' %}
+{{ extend('layouts/base.ogan') }}
 
-{% block title %}Liste des {$pluralName}{% endblock %}
-
-{% block content %}
+{{ start('body') }}
 <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Liste des {$pluralName}</h1>
-        <a href="/{$routeName}/create" 
+        <a href="{{ path('{$routeName}_create') }}" 
            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
             + Créer un {$routeName}
         </a>
     </div>
-
-    <!-- Flash messages -->
-    {% component 'flashes' %}
 
     <!-- Table -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -173,30 +198,26 @@ class TemplateGenerator extends AbstractGenerator
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                {% foreach items as item %}
-                <tr class="hover:bg-gray-50 transition duration-150">
+                {% for item in items %}
+                <tr{$rowId} class="hover:bg-gray-50 transition duration-150">
 {$cells}
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="/{$routeName}/{{ item.id }}" class="text-blue-600 hover:text-blue-900 mr-3">Voir</a>
-                        <a href="/{$routeName}/{{ item.id }}/edit" class="text-yellow-600 hover:text-yellow-900 mr-3">Éditer</a>
-                        <form action="/{$routeName}/{{ item.id }}/delete" method="POST" class="inline" onsubmit="return confirm('Êtes-vous sûr ?')">
-                            <button type="submit" class="text-red-600 hover:text-red-900">Supprimer</button>
-                        </form>
+{$deleteAction}
                     </td>
                 </tr>
-                {% endforeach %}
+                {% endfor %}
             </tbody>
         </table>
         
-        {% if items is empty %}
+        {% if count(items) == 0 %}
         <div class="text-center py-12 text-gray-500">
             Aucun élément trouvé.
-            <a href="/{$routeName}/create" class="text-blue-600 hover:underline">Créer le premier</a>
+            <a href="{{ path('{$routeName}_create') }}" class="text-blue-600 hover:underline">Créer le premier</a>
         </div>
         {% endif %}
     </div>
 </div>
-{% endblock %}
+{{ end }}
 OGAN;
     }
 
@@ -205,7 +226,7 @@ OGAN;
      * GÉNÉRER LE TEMPLATE SHOW
      * ═══════════════════════════════════════════════════════════════════
      */
-    private function generateShowTemplate(string $className, string $routeName, array $properties): string
+    private function generateShowTemplate(string $className, string $routeName, array $properties, bool $htmx = false): string
     {
         $pluralName = $routeName . 's';
         $displayProperties = $this->getDisplayProperties($properties, true);
@@ -221,30 +242,45 @@ OGAN;
             $details .= "            </div>\n";
         }
 
+        // Action de suppression (HTMX ou classique)
+        if ($htmx) {
+            $deleteAction = <<<HTMX
+        <button hx-delete="{{ path('{$routeName}_delete', ['id' => item.id]) }}"
+                hx-confirm="Êtes-vous sûr de vouloir supprimer cet élément ?"
+                class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+            Supprimer
+        </button>
+HTMX;
+        } else {
+            $deleteAction = <<<CLASSIC
+        <form action="{{ path('{$routeName}_delete', ['id' => item.id]) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')">
+            <button type="submit" 
+                    class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                Supprimer
+            </button>
+        </form>
+CLASSIC;
+        }
+
         return <<<OGAN
-{% extends 'layouts/base.ogan' %}
+{{ extend('layouts/base.ogan') }}
 
-{% block title %}Détails du {$routeName}{% endblock %}
-
-{% block content %}
+{{ start('body') }}
 <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Détails du {$routeName}</h1>
         <div class="space-x-2">
-            <a href="/{$routeName}/{{ item.id }}/edit" 
+            <a href="{{ path('{$routeName}_edit', ['id' => item.id]) }}" 
                class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
                 Éditer
             </a>
-            <a href="/{$pluralName}" 
+            <a href="{{ path('{$routeName}_list') }}" 
                class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
                 Retour à la liste
             </a>
         </div>
     </div>
-
-    <!-- Flash messages -->
-    {% component 'flashes' %}
 
     <!-- Card détails -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -259,15 +295,10 @@ OGAN;
 
     <!-- Actions -->
     <div class="mt-6 flex space-x-4">
-        <form action="/{$routeName}/{{ item.id }}/delete" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')">
-            <button type="submit" 
-                    class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
-                Supprimer
-            </button>
-        </form>
+{$deleteAction}
     </div>
 </div>
-{% endblock %}
+{{ end }}
 OGAN;
     }
 
@@ -281,26 +312,21 @@ OGAN;
         $pluralName = $routeName . 's';
         $isEdit = $type === 'edit';
         $title = $isEdit ? "Éditer le {$routeName}" : "Créer un {$routeName}";
-        $action = $isEdit ? "/{$routeName}/{{ item.id }}/update" : "/{$routeName}/store";
+        $action = $isEdit ? "{{ path('{$routeName}_update', ['id' => item.id]) }}" : "{{ path('{$routeName}_store') }}";
 
         return <<<OGAN
-{% extends 'layouts/base.ogan' %}
+{{ extend('layouts/base.ogan') }}
 
-{% block title %}{$title}{% endblock %}
-
-{% block content %}
+{{ start('body') }}
 <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-900">{$title}</h1>
-        <a href="/{$pluralName}" 
+        <a href="{{ path('{$routeName}_list') }}" 
            class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
             Retour à la liste
         </a>
     </div>
-
-    <!-- Flash messages -->
-    {% component 'flashes' %}
 
     <!-- Formulaire -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -309,31 +335,28 @@ OGAN;
         </div>
         
         <div class="p-6">
-            {{ form.start }}
+            {{ formStart(form) }}
             
             <div class="space-y-6">
-                {% foreach form.fields as field %}
-                    {% if field.name != 'submit' %}
-                    <div>
-                        {{ form.row(field.name) }}
-                    </div>
-                    {% endif %}
-                {% endforeach %}
+                {{ formRest(form) }}
             </div>
             
             <div class="mt-8 flex justify-end space-x-4">
-                <a href="/{$pluralName}" 
+                <a href="{{ path('{$routeName}_list') }}" 
                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition duration-200">
                     Annuler
                 </a>
-                {{ form.row('submit') }}
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200">
+                    Enregistrer
+                </button>
             </div>
             
-            {{ form.end }}
+            {{ formEnd(form) }}
         </div>
     </div>
 </div>
-{% endblock %}
+{{ end }}
 OGAN;
     }
 

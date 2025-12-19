@@ -11,6 +11,7 @@ Bienvenue dans la documentation complète du framework Ogan.
 - **[Génération de Code](guides/code-generation.md)** - Générateurs de code (controllers, forms, models)
 - **[Debugging](guides/debugging.md)** - Outils de debug: dump(), dd(), Debug Bar, ErrorHandler
 - **[Syntaxe des Templates](guides/template-syntax.md)** - Guide complet de la syntaxe `{{ }}` (style Twig/Blade)
+- **[Guide HTMX](guides/htmx.md)** - Intégration et utilisation de HTMX pour des interfaces dynamiques
 - **[Docker](guides/docker.md)** - Démarrage rapide avec Docker (MySQL, PostgreSQL)
 - **[Explications](guides/explications.md)** - Explications détaillées (ORM, .env, cookies.txt, etc.)
 - **[Bases de Données](guides/databases.md)** - Support multi-bases de données (MySQL, PostgreSQL, SQLite, SQL Server)

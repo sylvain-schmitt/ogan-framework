@@ -79,6 +79,11 @@ class DotSyntaxTransformer
                         // Détecter si c'est probablement une méthode
                         $isMethod = preg_match('/^(get|set|is|has|can|should|will|do|make|create|find|save|delete|update|remove|add|clear|reset|load|fetch|build|generate|render|format|toString|toArray|toJson|toXml|toYaml|toCsv|toHtml|toText|toMarkdown|toRst|toAscii|toBase64|toHex|toBinary|toOctal|toDecimal|toFloat|toInt|toBool|toBoolean)/i', $member);
 
+                        // Exceptions pour les champs de date courants (qui commencent par create/update/delete mais sont des propriétés)
+                        if (in_array($member, ['createdAt', 'updatedAt', 'deletedAt', 'emailVerifiedAt'])) {
+                            $isMethod = false;
+                        }
+
                         if ($isMethod) {
                             return $object . '->' . $member . '()';
                         } else {
@@ -108,6 +113,12 @@ class DotSyntaxTransformer
                     }
 
                     $isMethod = preg_match('/^(get|set|is|has|can|should|will|do|make|create|find|save|delete|update|remove|add|clear|reset|load|fetch|build|generate|render|format|toString|toArray|toJson|toXml|toYaml|toCsv|toHtml|toText|toMarkdown|toRst|toAscii|toBase64|toHex|toBinary|toOctal|toDecimal|toFloat|toInt|toBool|toBoolean)/i', $member);
+                    
+                    // Exceptions pour les champs de date courants
+                    if (in_array($member, ['createdAt', 'updatedAt', 'deletedAt', 'emailVerifiedAt'])) {
+                        $isMethod = false;
+                    }
+
                     return $isMethod ? $call . '()' : $call;
                 },
                 $expression,

@@ -12,8 +12,11 @@ use Ogan\Console\Generator\AbstractGenerator;
 
 class DashboardComponentGenerator extends AbstractGenerator
 {
-    public function generate(string $projectRoot, bool $force = false): array
+    private bool $htmx = false;
+
+    public function generate(string $projectRoot, bool $force = false, bool $htmx = false): array
     {
+        $this->htmx = $htmx;
         $generated = [];
         $skipped = [];
 
@@ -53,14 +56,17 @@ class DashboardComponentGenerator extends AbstractGenerator
 
     private function getSidebarTemplate(): string
     {
-        return <<<'HTML'
+        // Avec HTMX, on peut utiliser hx-boost pour la navigation
+        $hxBoost = $this->htmx ? ' hx-boost="true"' : '';
+
+        return <<<HTML
 <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-sm transition-transform -translate-x-full md:translate-x-0" id="sidebar">
     <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-6">
         <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">DELNYX</span>
     </div>
     
-    <nav class="p-4 space-y-1">
-        <a href={{ route('dashboard_index') }} class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group transition-colors">
+    <nav class="p-4 space-y-1"{$hxBoost}>
+        <a href="{{ path('dashboard_index') }}" class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group transition-colors">
             <svg class="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
             Dashboard
         </a>
@@ -85,7 +91,9 @@ HTML;
 
     private function getNavbarTemplate(): string
     {
-        return <<<'HTML'
+        $hxBoost = $this->htmx ? ' hx-boost="true"' : '';
+
+        return <<<HTML
 <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
     <!-- Mobile menu button -->
     <button type="button" class="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none" onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')">
@@ -105,9 +113,9 @@ HTML;
             <button type="button" class="peer flex items-center max-w-xs text-sm bg-white dark:bg-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
                 <span class="sr-only">Open user menu</span>
                 <div class="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold">
-                    {{ user.name|first|upper }}
+                    {{ app.user.name|first|upper }}
                 </div>
-                <span class="ml-3 hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">{{ user.name }}</span>
+                <span class="ml-3 hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">{{ app.user.name }}</span>
                 <svg class="ml-2 h-5 w-5 text-gray-400 group-hover:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
             </button>
             
@@ -115,16 +123,16 @@ HTML;
             <div class="hidden peer-focus:block hover:block focus-within:block absolute right-0 w-56 mt-2 origin-top-right bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50">
                 <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                     <p class="text-sm font-medium text-gray-900 dark:text-white">Connecté en tant que</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ user.email }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ app.user.email }}</p>
                 </div>
                 <div class="py-1">
-                    <a href="{{ route('user_profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <a href="{{ path('user_profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         Mon Profil
                     </a>
                 </div>
                 <div class="border-t border-gray-100 dark:border-gray-700 py-1">
-                    <a href="{{ route('security_logout') }}" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    <a href="{{ path('logout') }}" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                         Déconnexion
                     </a>

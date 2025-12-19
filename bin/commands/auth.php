@@ -9,6 +9,10 @@ use Ogan\Console\Generator\Auth\AuthGenerator;
  * 
  * Utilise les générateurs modulaires dans ogan/Console/Generator/Auth/
  * 
+ * Options :
+ *   --force   Écrase les fichiers existants
+ *   --htmx    Génère les templates avec support HTMX
+ * 
  * ═══════════════════════════════════════════════════════════════════════
  */
 function registerAuthCommands($app) {
@@ -17,11 +21,16 @@ function registerAuthCommands($app) {
     // make:auth
     $app->addCommand('make:auth', function($args) use ($projectRoot) {
         $force = in_array('--force', $args);
+        $htmx = in_array('--htmx', $args);
         
-        echo "🔐 Génération du système d'authentification...\n\n";
+        echo "🔐 Génération du système d'authentification...\n";
+        if ($htmx) {
+            echo "   (avec support HTMX activé)\n";
+        }
+        echo "\n";
 
         $generator = new AuthGenerator();
-        $result = $generator->generate($projectRoot, $force);
+        $result = $generator->generate($projectRoot, $force, $htmx);
 
         // Afficher les fichiers générés
         if (!empty($result['generated'])) {
@@ -47,5 +56,6 @@ function registerAuthCommands($app) {
         echo "   4. Accéder à /dashboard pour voir le back-office\n";
 
         return 0;
-    }, 'Génère le système d\'authentification complet (Auth + Dashboard)');
+    }, 'Génère le système d\'authentification complet (--htmx pour HTMX, --force pour écraser)');
 }
+

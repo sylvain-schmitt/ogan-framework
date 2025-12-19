@@ -162,6 +162,10 @@ Génère une balise `<script>` pour un fichier JS.
 <!-- Si $title = "<script>alert('XSS')</script>" -->
 <!-- Génère : <h1>&lt;script&gt;alert('XSS')&lt;/script&gt;</h1> -->
 
+<!-- Formatage automatique des dates -->
+<p>Créé le : <?= $this->e($user->getCreatedAt()) ?></p>
+<!-- Si getCreatedAt() retourne un DateTime, génère : 19/12/2025 14:30 -->
+
 <!-- Alias -->
 <p><?= $this->escape($user->name) ?></p>
 ```

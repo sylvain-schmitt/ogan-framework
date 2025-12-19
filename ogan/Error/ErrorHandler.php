@@ -287,6 +287,11 @@ class ErrorHandler
      */
     private function renderDebugPage(Throwable $exception): void
     {
+        // Nettoyer tous les buffers de sortie pour éviter d'afficher l'erreur au milieu d'une page
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
         $class = get_class($exception);
         $message = htmlspecialchars($exception->getMessage(), ENT_QUOTES, 'UTF-8');
         $file = $exception->getFile();
@@ -314,7 +319,13 @@ class ErrorHandler
             min-height: 100vh;
             line-height: 1.5;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .container { 
+            width: 95%; 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            box-sizing: border-box;
+        }
         
         /* Header */
         .header {

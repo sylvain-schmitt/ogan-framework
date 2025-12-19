@@ -22,8 +22,12 @@ class AuthGenerator extends AbstractGenerator
 
     /**
      * Génère le système d'authentification complet
+     * 
+     * @param string $projectRoot Chemin racine du projet
+     * @param bool $force Forcer l'écrasement des fichiers existants
+     * @param bool $htmx Générer avec support HTMX
      */
-    public function generate(string $projectRoot, bool $force = false): array
+    public function generate(string $projectRoot, bool $force = false, bool $htmx = false): array
     {
         // 1. Model User
         $this->runGenerator(new UserModelGenerator(), $projectRoot, $force);
@@ -43,12 +47,12 @@ class AuthGenerator extends AbstractGenerator
         // 5. FormTypes
         $this->runGenerator(new AuthFormTypeGenerator(), $projectRoot, $force);
 
-        // 6. Templates
-        $this->runGenerator(new SecurityTemplateGenerator(), $projectRoot, $force);
+        // 6. Templates (avec support HTMX optionnel)
+        $this->runTemplateGenerator(new SecurityTemplateGenerator(), $projectRoot, $force, $htmx);
         $this->runGenerator(new EmailTemplateGenerator(), $projectRoot, $force);
-        $this->runGenerator(new DashboardTemplateGenerator(), $projectRoot, $force);
-        $this->runGenerator(new DashboardComponentGenerator(), $projectRoot, $force);
-        $this->runGenerator(new ProfileTemplateGenerator(), $projectRoot, $force);
+        $this->runTemplateGenerator(new DashboardTemplateGenerator(), $projectRoot, $force, $htmx);
+        $this->runTemplateGenerator(new DashboardComponentGenerator(), $projectRoot, $force, $htmx);
+        $this->runTemplateGenerator(new ProfileTemplateGenerator(), $projectRoot, $force, $htmx);
 
         // 7. Assets JS
         $this->runGenerator(new JsAssetGenerator(), $projectRoot, $force);
@@ -68,6 +72,34 @@ class AuthGenerator extends AbstractGenerator
     private function runGenerator(object $generator, string $projectRoot, bool $force): void
     {
         $result = $generator->generate($projectRoot, $force);
+        
+        if (isset($result['generated'])) {
+            $this->generated = array_merge($this->generated, $result['generated']);
+        }
+        if (isset($result['skipped'])) {
+            $this->skipped = array_merge($this->skipped, $result['skipped']);
+        }
+    }
+
+    /**
+     * Exécute un générateur de templates avec support HTMX
+     */
+    private function runTemplateGenerator(object $generator, string $projectRoot, bool $force, bool $htmx): void
+    {
+        // Vérifier si le générateur supporte HTMX
+        if (method_exists($generator, 'generate')) {
+            $reflection = new \ReflectionMethod($generator, 'generate');
+            $params = $reflection->getParameters();
+            
+            // Si le générateur a un paramètre htmx, le passer
+            if (count($params) >= 3) {
+                $result = $generator->generate($projectRoot, $force, $htmx);
+            } else {
+                $result = $generator->generate($projectRoot, $force);
+            }
+        } else {
+            $result = $generator->generate($projectRoot, $force);
+        }
         
         if (isset($result['generated'])) {
             $this->generated = array_merge($this->generated, $result['generated']);

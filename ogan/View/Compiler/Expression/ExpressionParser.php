@@ -58,14 +58,31 @@ class ExpressionParser
             return $expression;
         }
 
+        // ÉTAPE 0 : Transformer la syntaxe app.xxx en $this->app()->getXxx()
+        // IMPORTANT: Utilise une liste blanche des propriétés valides pour éviter
+        // de transformer des chemins de fichiers comme 'app.css'
+        // Propriétés supportées: user, session, request, flashes, debug, environment
+        $appProperties = ['user', 'session', 'request', 'flashes', 'debug', 'environment'];
+        $appPropertiesPattern = implode('|', $appProperties);
+        
+        $expression = preg_replace_callback(
+            '/\bapp\.(' . $appPropertiesPattern . ')\b/',
+            function ($matches) {
+                $property = $matches[1];
+                $getter = 'get' . ucfirst($property);
+                return '$this->app()->' . $getter . '()';
+            },
+            $expression
+        );
+
         // ÉTAPE 1 : Transformer les filtres (pipes)
         // Exemple: val|upper → strtoupper(val)
         // On le fait au début pour que les transformations suivantes s'appliquent au résultat
         $expression = $this->filterTransformer->transform($expression);
 
-        // ÉTAPE 2 : Gérer les appels de fonctions (section, route, component, etc.)
+        // ÉTAPE 2 : Gérer les appels de fonctions (section, route, path, component, etc.)
         // Ces fonctions doivent être transformées en $this->functionName(...)
-        $thisMethods = ['section', 'route', 'url', 'asset', 'css', 'js', 'component', 'e', 'escape', 'block', 'csrf_token', 'csrf_input', 'cssFramework', 'extend', 'start', 'end', 'hasFlash', 'getFlash', 'get', 'set', 'has'];
+        $thisMethods = ['section', 'route', 'path', 'url', 'asset', 'css', 'js', 'component', 'e', 'escape', 'block', 'csrf_token', 'csrf_input', 'cssFramework', 'extend', 'start', 'end', 'hasFlash', 'getFlash', 'get', 'set', 'has', 'app'];
 
         // Détecter les appels de fonctions même après protection des chaînes
         // Le pattern doit aussi matcher les placeholders de chaînes (##STRING_X##)
@@ -208,9 +225,13 @@ class ExpressionParser
                 $functionName = $funcMatch[1];
 
                 // Si c'est une méthode de $this et qu'elle n'est pas déjà transformée
+                // Vérifier ce qui précède le nom de la fonction
+                $startOfFunc = $pos - strlen($funcMatch[0]);
+                $beforeFunc = substr($args, 0, $startOfFunc);
+                
                 if (
                     in_array($functionName, $thisMethods) &&
-                    !preg_match('/\$this->' . preg_quote($functionName, '/') . '\s*\(/', substr($args, 0, $pos))
+                    !preg_match('/\$this->\s*$/', $beforeFunc)
                 ) {
 
                     // Trouver la parenthèse fermante correspondante

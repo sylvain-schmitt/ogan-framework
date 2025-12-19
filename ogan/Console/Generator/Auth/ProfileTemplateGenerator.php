@@ -12,8 +12,11 @@ use Ogan\Console\Generator\AbstractGenerator;
 
 class ProfileTemplateGenerator extends AbstractGenerator
 {
-    public function generate(string $projectRoot, bool $force = false): array
+    private bool $htmx = false;
+
+    public function generate(string $projectRoot, bool $force = false, bool $htmx = false): array
     {
+        $this->htmx = $htmx;
         $generated = [];
         $skipped = [];
 
@@ -54,7 +57,7 @@ class ProfileTemplateGenerator extends AbstractGenerator
 				Détails de votre compte utilisateur.
 			</p>
 		</div>
-		<a href="{{ route('user_profile_edit') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+		<a href="{{ path('user_profile_edit') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
 			Modifier
 		</a>
 	</div>
@@ -65,7 +68,7 @@ class ProfileTemplateGenerator extends AbstractGenerator
 					Nom complet
 				</dt>
 				<dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
-					{{ user.name }}
+					{{ app.user.name }}
 				</dd>
 			</div>
 			<div class="bg-white dark:bg-gray-800 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -73,7 +76,7 @@ class ProfileTemplateGenerator extends AbstractGenerator
 					Adresse email
 				</dt>
 				<dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
-					{{ user.email }}
+					{{ app.user.email }}
 				</dd>
 			</div>
 			<div class="bg-gray-50 dark:bg-gray-900 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -81,7 +84,7 @@ class ProfileTemplateGenerator extends AbstractGenerator
 					Compte créé le
 				</dt>
 				<dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
-					{{ user.getCreatedAt() }}
+					{{ app.user.createdAt }}
 				</dd>
 			</div>
 		</dl>
@@ -93,11 +96,15 @@ OGAN;
 
     private function getEditTemplate(): string
     {
-        return <<<'OGAN'
+        $hxBoostAttrs = $this->htmx 
+            ? ' hx-boost="true"'
+            : '';
+
+        return <<<OGAN
 {{ extend('dashboard/layout.ogan') }}
 
 {{ start('content') }}
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl mx-auto" id="form-container"{$hxBoostAttrs}>
 	<div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
 		<div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
 			<div class="flex items-center justify-between">
@@ -109,7 +116,7 @@ OGAN;
 						Mettez à jour vos informations personnelles.
 					</p>
 				</div>
-				<a href="{{ route('user_profile') }}" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+				<a href="{{ path('user_profile') }}" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
 					← Retour
 				</a>
 			</div>

@@ -96,6 +96,24 @@ abstract class AbstractController
     }
 
     /**
+     * Ajoute un message flash à la session.
+     * 
+     * Les messages flash sont des messages temporaires stockés en session,
+     * affichés une fois à l'utilisateur puis supprimés automatiquement.
+     * 
+     * @param string $type Type de message (success, error, warning, info)
+     * @param string $message Le message à afficher
+     */
+    protected function addFlash(string $type, string $message): void
+    {
+        if ($this->session === null) {
+            throw new \RuntimeException('Cannot add flash message: no session available.');
+        }
+
+        $this->session->setFlash($type, $message);
+    }
+
+    /**
      * Rendu d’un partial ou d’un component réutilisable.
      */
     protected function renderPartial(string $template, array $params = []): string
@@ -108,6 +126,16 @@ abstract class AbstractController
      */
     protected function render(string $template, array $params = []): Response
     {
+        // Injecter l'utilisateur courant dans la vue (pour app.user)
+        try {
+            $user = $this->getUser();
+            if ($user) {
+                $this->view->setUser($user);
+            }
+        } catch (\Exception $e) {
+            // Ignorer les erreurs si la session ou la DB n'est pas prête
+        }
+
         // Gestion du titre (celui du contrôleur > celui de config)
         $params['title'] = $params['title']
             ?? $this->config['view']['default_title'];

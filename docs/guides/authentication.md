@@ -11,6 +11,9 @@ php bin/console make:auth
 # Régénérer tous les fichiers (écrase les existants sauf migrations)
 php bin/console make:auth --force
 
+# Générer avec le support HTMX préconfiguré
+php bin/console make:auth --htmx
+
 # Puis exécuter les migrations
 php bin/console migrate
 ```
@@ -107,6 +110,23 @@ auth:
 **`send_password_reset_email: true`**
 - Le lien "Mot de passe oublié" s'affiche
 - Un email est envoyé avec le lien de réinitialisation
+
+---
+
+---
+
+## ⚡ Support HTMX
+
+Le système d'authentification supporte nativement HTMX avec le flag `--htmx`.
+
+### Ce que cela change :
+
+1.  **Script HTMX** : Ajouté automatiquement dans le `<head>` de `layout.ogan` via `htmx_script()`.
+2.  **Navigation** : Utilisation standard pour les menus (pas de `hx-boost` sur les dropdowns pour éviter les conflits).
+3.  **Sidebar** : Navigation AJAX possible sur la sidebar principale (optionnel).
+4.  **Formulaires** : Préparés pour une soumission classique ou AJAX selon vos préférences.
+
+Pour activer cette fonctionnalité après coup, ajoutez simplement le script HTMX dans `templates/dashboard/layout.ogan`.
 
 ---
 

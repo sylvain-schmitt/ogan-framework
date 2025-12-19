@@ -29,6 +29,7 @@ php bin/console make:controller <Name>   # Générer un contrôleur CRUD (mode i
 php bin/console make:form <Name>         # Générer un FormType avec contraintes auto
 php bin/console make:model [Name]        # Générer un modèle (mode interactif)
 php bin/console make:all [Name]          # Générer tout (modèle + repository + form + contrôleur)
+php bin/console make:auth [--htmx]       # Générer le système d'authentification complet
 php bin/console make:migration <Model>   # Générer une migration (alias de migrate:make)
 ```
 

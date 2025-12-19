@@ -12,8 +12,11 @@ use Ogan\Console\Generator\AbstractGenerator;
 
 class SecurityTemplateGenerator extends AbstractGenerator
 {
-    public function generate(string $projectRoot, bool $force = false): array
+    private bool $htmx = false;
+
+    public function generate(string $projectRoot, bool $force = false, bool $htmx = false): array
     {
+        $this->htmx = $htmx;
         $generated = [];
         $skipped = [];
 
@@ -42,12 +45,17 @@ class SecurityTemplateGenerator extends AbstractGenerator
 
     private function getLoginTemplate(): string
     {
-        return <<<'OGAN'
+        // HTMX: utiliser hx-boost sur le form-container pour améliorer la navigation
+        $containerAttrs = $this->htmx 
+            ? ' hx-boost="true"'
+            : '';
+
+        return <<<OGAN
 {{ extend('layouts/base.ogan') }}
 
 {{ start('body') }}
 <div class="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
-    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8" id="form-container"{$containerAttrs}>
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Connexion</h1>
             <p class="text-gray-600 mt-2">Connectez-vous à votre compte</p>
@@ -57,7 +65,7 @@ class SecurityTemplateGenerator extends AbstractGenerator
 
         {% if show_forgot_password %}
         <div class="mt-6 text-center text-sm">
-            <a href="/forgot-password" class="text-indigo-600 hover:text-indigo-500">
+            <a href="{{ path('forgot_password') }}" class="text-indigo-600 hover:text-indigo-500">
                 Mot de passe oublié ?
             </a>
         </div>
@@ -65,7 +73,7 @@ class SecurityTemplateGenerator extends AbstractGenerator
 
         <div class="mt-4 text-center text-sm text-gray-600">
             Pas encore de compte ?
-            <a href="/register" class="text-indigo-600 hover:text-indigo-500 font-semibold">
+            <a href="{{ path('register') }}" class="text-indigo-600 hover:text-indigo-500 font-semibold">
                 Créer un compte
             </a>
         </div>
@@ -77,12 +85,16 @@ OGAN;
 
     private function getRegisterTemplate(): string
     {
-        return <<<'OGAN'
+        $containerAttrs = $this->htmx 
+            ? ' hx-boost="true"'
+            : '';
+
+        return <<<OGAN
 {{ extend('layouts/base.ogan') }}
 
 {{ start('body') }}
 <div class="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
-    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8" id="form-container"{$containerAttrs}>
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Inscription</h1>
             <p class="text-gray-600 mt-2">Créez votre compte gratuitement</p>
@@ -92,7 +104,7 @@ OGAN;
 
         <div class="mt-6 text-center text-sm text-gray-600">
             Déjà un compte ?
-            <a href="/login" class="text-indigo-600 hover:text-indigo-500 font-semibold">
+            <a href="{{ path('login') }}" class="text-indigo-600 hover:text-indigo-500 font-semibold">
                 Se connecter
             </a>
         </div>
@@ -104,12 +116,16 @@ OGAN;
 
     private function getForgotPasswordTemplate(): string
     {
-        return <<<'OGAN'
+        $containerAttrs = $this->htmx 
+            ? ' hx-boost="true"'
+            : '';
+
+        return <<<OGAN
 {{ extend('layouts/base.ogan') }}
 
 {{ start('body') }}
 <div class="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
-    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8" id="form-container"{$containerAttrs}>
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Mot de passe oublié</h1>
             <p class="text-gray-600 mt-2">Entrez votre email pour recevoir un lien de réinitialisation</p>
@@ -125,7 +141,7 @@ OGAN;
         {% form.render() %}
 
         <div class="mt-6 text-center text-sm">
-            <a href="/login" class="text-indigo-600 hover:text-indigo-500">
+            <a href="{{ path('login') }}" class="text-indigo-600 hover:text-indigo-500">
                 ← Retour à la connexion
             </a>
         </div>
@@ -137,12 +153,16 @@ OGAN;
 
     private function getResetPasswordTemplate(): string
     {
-        return <<<'OGAN'
+        $containerAttrs = $this->htmx 
+            ? ' hx-boost="true"'
+            : '';
+
+        return <<<OGAN
 {{ extend('layouts/base.ogan') }}
 
 {{ start('body') }}
 <div class="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4">
-    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8" id="form-container"{$containerAttrs}>
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Nouveau mot de passe</h1>
             <p class="text-gray-600 mt-2">Choisissez un nouveau mot de passe sécurisé</p>
@@ -151,7 +171,7 @@ OGAN;
         {% form.render() %}
 
         <div class="mt-6 text-center text-sm">
-            <a href="/login" class="text-indigo-600 hover:text-indigo-500">
+            <a href="{{ path('login') }}" class="text-indigo-600 hover:text-indigo-500">
                 ← Retour à la connexion
             </a>
         </div>
