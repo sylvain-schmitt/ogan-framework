@@ -80,6 +80,9 @@ JS;
             $appCss = <<<'CSS'
 @import "tailwindcss";
 
+/* Configuration dark mode pour le toggle manuel (Tailwind v4) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Vos styles personnalisés ici */
 CSS;
             file_put_contents($appCssPath, $appCss);
