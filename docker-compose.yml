@@ -1,23 +1,23 @@
 # ═══════════════════════════════════════════════════════════════════════
 # DOCKER COMPOSE - OGAN FRAMEWORK
 # ═══════════════════════════════════════════════════════════════════════
-# 
+#
 # Démarre rapidement les services pour le développement
-# 
+#
 # UTILISATION :
 # 1. Démarrez les services : docker-compose up -d
 # 2. Configurez votre .env avec les valeurs ci-dessous
 # 3. Arrêtez les services : docker-compose down
-# 
+#
 # SERVICES PAR DÉFAUT :
 # - MySQL 8.0 (port 3306) - Base de données principale
 # - phpMyAdmin (port 8080) - Interface web pour MySQL
 # - MailHog (port 8025) - Serveur SMTP de test pour les emails
-# 
+#
 # SERVICES OPTIONNELS (décommenter si nécessaire) :
 # - PostgreSQL 15 (port 5432)
 # - pgAdmin (port 5050) - Interface web pour PostgreSQL
-# 
+#
 # ═══════════════════════════════════════════════════════════════════════
 
 version: '3.8'
@@ -113,7 +113,7 @@ services:
   #   container_name: ogan_pgadmin
   #   restart: unless-stopped
   #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: admin@ogan.local
+  #     PGADMIN_DEFAULT_EMAIL: admin@ogan.dev
   #     PGADMIN_DEFAULT_PASSWORD: admin
   #     PGADMIN_CONFIG_SERVER_MODE: 'False'
   #   ports:
