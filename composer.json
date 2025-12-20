@@ -1,16 +1,13 @@
 {
-    "name": "ogan/framework",
-    "description": "Mini Framework PHP MVC pédagogique - Créé avec passion pour apprendre et comprendre les frameworks",
-    "type": "library",
+    "name": "ogan/skeleton",
+    "description": "Ogan Skeleton - Projet de démarrage pour Ogan Framework",
+    "type": "project",
     "keywords": [
         "framework",
         "mvc",
         "php",
-        "router",
-        "dependency-injection",
-        "orm",
-        "pedagogique",
-        "educational"
+        "skeleton",
+        "starter"
     ],
     "license": "MIT",
     "authors": [
@@ -20,22 +17,17 @@
         }
     ],
     "require": {
-        "php": ">=8.1"
+        "php": ">=8.1",
+        "ogan/core": "^1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.0"
     },
     "autoload": {
         "psr-4": {
-            "Ogan\\": "ogan/",
-            "App\\": "src/"
-        },
-        "files": [
-            "ogan/Debug/helpers.php",
-            "ogan/Cache/helpers.php",
-            "ogan/View/Helper/htmx_helpers.php",
-            "ogan/Logger/helpers.php"
-        ]
+            "App\\": "src/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
     },
     "autoload-dev": {
         "psr-4": {
@@ -49,6 +41,10 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "scripts": {
-        "test": "phpunit"
+        "test": "phpunit",
+        "post-create-project-cmd": [
+            "@php -r \"copy('.env.example', '.env');\"",
+            "@php bin/console tailwind:init"
+        ]
     }
 }
