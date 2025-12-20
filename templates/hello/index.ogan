@@ -157,6 +157,86 @@
 	</div>
 </div>
 
+<!-- Quick Start CLI Section -->
+<div class="py-20 bg-white">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+		<div class="text-center mb-16">
+			<h2 class="text-base text-indigo-600 font-semibold tracking-wide uppercase">Quick Start</h2>
+			<p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+				Commandes CLI
+			</p>
+			<p class="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
+				Générez du code rapidement avec les commandes Ogan.
+			</p>
+		</div>
+
+		<div
+			class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+			<!-- Auth Command -->
+			<div class="bg-gray-900 rounded-xl overflow-hidden shadow-xl">
+				<div class="flex items-center px-4 py-3 bg-gray-800 border-b border-gray-700">
+					<div class="flex space-x-2">
+						<div class="w-3 h-3 rounded-full bg-red-400"></div>
+						<div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+						<div class="w-3 h-3 rounded-full bg-green-400"></div>
+					</div>
+					<span class="ml-4 text-gray-400 text-sm">Authentification</span>
+				</div>
+				<pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-green-400">$</span> php bin/console make:auth
+
+<span class="text-gray-500"># Avec HTMX (rechargement partiel)</span>
+<span class="text-green-400">$</span> php bin/console make:auth --htmx</code></pre>
+			</div>
+
+			<!-- Pagination Command -->
+			<div class="bg-gray-900 rounded-xl overflow-hidden shadow-xl">
+				<div class="flex items-center px-4 py-3 bg-gray-800 border-b border-gray-700">
+					<div class="flex space-x-2">
+						<div class="w-3 h-3 rounded-full bg-red-400"></div>
+						<div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+						<div class="w-3 h-3 rounded-full bg-green-400"></div>
+					</div>
+					<span class="ml-4 text-gray-400 text-sm">Pagination</span>
+				</div>
+				<pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-green-400">$</span> php bin/console make:pagination User
+
+<span class="text-gray-500"># Avec HTMX (progress bar)</span>
+<span class="text-green-400">$</span> php bin/console make:pagination User --htmx</code></pre>
+			</div>
+
+			<!-- Model Command -->
+			<div class="bg-gray-900 rounded-xl overflow-hidden shadow-xl">
+				<div class="flex items-center px-4 py-3 bg-gray-800 border-b border-gray-700">
+					<div class="flex space-x-2">
+						<div class="w-3 h-3 rounded-full bg-red-400"></div>
+						<div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+						<div class="w-3 h-3 rounded-full bg-green-400"></div>
+					</div>
+					<span class="ml-4 text-gray-400 text-sm">Modèle & CRUD</span>
+				</div>
+				<pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-green-400">$</span> php bin/console make:model Article
+<span class="text-green-400">$</span> php bin/console make:controller Article
+<span class="text-green-400">$</span> php bin/console make:form Article</code></pre>
+			</div>
+
+			<!-- Migration Command -->
+			<div class="bg-gray-900 rounded-xl overflow-hidden shadow-xl">
+				<div class="flex items-center px-4 py-3 bg-gray-800 border-b border-gray-700">
+					<div class="flex space-x-2">
+						<div class="w-3 h-3 rounded-full bg-red-400"></div>
+						<div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+						<div class="w-3 h-3 rounded-full bg-green-400"></div>
+					</div>
+					<span class="ml-4 text-gray-400 text-sm">Base de données</span>
+				</div>
+				<pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-green-400">$</span> php bin/console migrate:make Article
+<span class="text-green-400">$</span> php bin/console migrate
+<span class="text-green-400">$</span> php bin/console migrate:status</code></pre>
+			</div>
+		</div>
+	</div>
+</div>
+
 <!-- CTA Section -->
 <div class="bg-indigo-600 py-16">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

@@ -147,6 +147,11 @@ class ExpressionCompiler implements CompilerInterface
             $expression = trim($unescapedMatch[1]);
             $unescaped = true;
         }
+        
+        // Détecter le filtre |raw (sans échappement)
+        if (preg_match('/\|raw\s*$/', $expression)) {
+            $unescaped = true;
+        }
 
         // Détecter les assignations de variables (ex: $var = value ou var = value)
         // Utiliser le flag 's' pour que . corresponde aussi aux retours à la ligne

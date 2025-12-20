@@ -22,7 +22,7 @@ class JsAssetGenerator extends AbstractGenerator
 
         $assets = [
             'theme.js' => 'getThemeJs',
-            'flashes.js' => 'getFlashesJs',
+            // Note: flashes.js fait partie du framework de base
         ];
 
         foreach ($assets as $filename => $method) {

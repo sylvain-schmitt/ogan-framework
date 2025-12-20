@@ -287,9 +287,9 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 
 ### Moyen Terme (en cours)
 1. 💡 Event Dispatcher
-2. 💡 Soft Delete
-3. 💡 Pagination intégrée
-4. 💡 make:templates
+2. ✅ ~~Pagination intégrée~~ **TERMINÉ**
+3. ✅ ~~make:templates~~ **TERMINÉ**
+4. 💡 Soft Delete
 5. 💡 make:seeder
 
 ### Long Terme

@@ -645,4 +645,49 @@ class QueryBuilder
 
         return " WHERE " . implode('', $conditions);
     }
+
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * PAGINATION DES RÉSULTATS
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * Retourne un objet Paginator contenant les résultats de la page
+     * courante et les métadonnées de pagination.
+     * 
+     * @param int $perPage Nombre d'éléments par page
+     * @param int|null $page Numéro de page (auto-détecté depuis $_GET si null)
+     * @return \Ogan\Database\Pagination\Paginator
+     * 
+     * @example
+     * $users = QueryBuilder::table('users')
+     *     ->where('active', '=', true)
+     *     ->paginate(15);
+     * 
+     * foreach ($users as $user) { ... }
+     * echo $users->links();
+     * 
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function paginate(int $perPage = 15, ?int $page = null): \Ogan\Database\Pagination\Paginator
+    {
+        // Auto-détection du numéro de page depuis $_GET
+        if ($page === null) {
+            $page = (int) ($_GET['page'] ?? 1);
+        }
+        $page = max(1, $page);
+
+        // Compte le total AVANT d'appliquer limit/offset
+        $total = $this->count();
+
+        // Calcule l'offset
+        $offset = ($page - 1) * $perPage;
+
+        // Applique la pagination et récupère les résultats
+        $this->limit($perPage);
+        $this->offset($offset);
+        $items = $this->get();
+
+        return new \Ogan\Database\Pagination\Paginator($items, $total, $perPage, $page);
+    }
 }

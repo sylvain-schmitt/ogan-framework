@@ -107,6 +107,12 @@ class FilterTransformer
             $format = $args ?? "'Y-m-d H:i:s'";
             return $value . '->format(' . $format . ')';
         }
+        
+        // Filtre raw : retourne la valeur telle quelle (sans transformation)
+        // L'ExpressionCompiler détectera ce marqueur pour ne pas échapper
+        if ($filterName === 'raw') {
+            return $value;
+        }
 
         // Filtres standards mappés
         if (isset(self::FILTERS[$filterName])) {

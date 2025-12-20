@@ -34,13 +34,14 @@ session:
   httponly: true
   samesite: Lax
 
-# Configuration du cache
+# ─────────────────────────────────────────────────────────────────────────────
+# 📦 CACHE
+# ─────────────────────────────────────────────────────────────────────────────
 cache:
-  driver: file                    # Driver par défaut: file, array
+  driver: file
   path: '%kernel.project_dir%/var/cache/data'
-  default_ttl: 3600               # 1 heure par défaut
+  default_ttl: 3600
 
-  # Stores spécifiques
   stores:
     file:
       path: '%kernel.project_dir%/var/cache/data'
@@ -48,54 +49,67 @@ cache:
     array:
       ttl: 3600
 
-  # Cache des requêtes (QueryBuilder)
   queries:
     enabled: true
-    ttl: 300                      # 5 minutes pour les queries
+    ttl: 300
 
-  # Cache des routes (compilation)
   routes:
     enabled: true
     file: '%kernel.project_dir%/var/cache/routes.php'
 
-# Configuration de l'authentification
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔐 AUTHENTIFICATION
+# Configuration générée par: php bin/console make:auth
+# ─────────────────────────────────────────────────────────────────────────────
 auth:
-  # Envoyer un email de vérification à l'inscription
+  # Activer après avoir configuré l'email (voir section mail)
   send_verification_email: false
-  # Envoyer un email pour le reset de mot de passe
   send_password_reset_email: false
-  # Redirections après login/logout
+  
+  # Redirections
   login_redirect: /dashboard
   logout_redirect: /login
 
-# Configuration des emails
+# ─────────────────────────────────────────────────────────────────────────────
+# 📧 EMAIL
+# Configurer dans .env :
+#   MAILER_DSN=smtp://user:pass@smtp.example.com:587
+#   MAIL_FROM=noreply@example.com
+#   MAIL_FROM_NAME="Mon App"
+# ─────────────────────────────────────────────────────────────────────────────
 mail:
   dsn: '%env(MAILER_DSN)%'
   from: '%env(MAIL_FROM)%'
   from_name: '%env(MAIL_FROM_NAME)%'
 
-# Configuration du debug (uniquement actif en dev)
+# ─────────────────────────────────────────────────────────────────────────────
+# 🐛 DEBUG (désactiver en production)
+# ─────────────────────────────────────────────────────────────────────────────
 debug:
-  enabled: true           # Activer les outils de debug
-  debug_bar: true         # Afficher la debug bar
-  collect_queries: true   # Logger les requêtes SQL
-  max_dump_depth: 10      # Profondeur max pour dump()
+  enabled: true
+  debug_bar: true
+  collect_queries: true
+  max_dump_depth: 10
 
-# Configuration de sécurité / autorisation
+# ─────────────────────────────────────────────────────────────────────────────
+# 🛡️ SÉCURITÉ
+# ─────────────────────────────────────────────────────────────────────────────
 security:
-  # Classe utilisateur pour l'authentification
   user_class: App\Model\User
   
-  # Hiérarchie des rôles (un rôle parent hérite des enfants)
   role_hierarchy:
     ROLE_ADMIN: [ROLE_USER]
     ROLE_SUPER_ADMIN: [ROLE_ADMIN]
   
-  # Page de refus d'accès
   access_denied_url: /login
 
-# Configuration Frontend (JavaScript)
+# ─────────────────────────────────────────────────────────────────────────────
+# ⚡ HTMX (optionnel)
+# Activer avec: php bin/console make:auth --htmx
+# Ou décommenter manuellement ci-dessous
+# ─────────────────────────────────────────────────────────────────────────────
 frontend:
   htmx:
-    enabled: false                 # HTMX activé
-    script: assets/js/htmx.min.js       # Chemin du script local
+    enabled: false                        # Mettre true pour activer HTMX
+    progress_bar: true                    # Barre de progression automatique
+    script: /assets/js/htmx.min.js

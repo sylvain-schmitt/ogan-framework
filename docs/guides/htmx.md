@@ -21,20 +21,43 @@ Ogan Framework intègre HTMX nativement avec :
 Activez HTMX dans `config/parameters.yaml` :
 
 ```yaml
-view:
-    use_htmx: true  # Active les helpers HTMX
+frontend:
+  htmx:
+    enabled: true      # Active les helpers HTMX
+    progress_bar: true # Barre de progression automatique
+    script: /assets/js/htmx.min.js
 ```
 
 ### 2. Inclusion du Script
 
-Ajoutez le helper `{{ htmx_script() }}` dans le `<head>` de votre layout (ex: `templates/layouts/base.ogan`).
-Il n'affichera le script que si `use_htmx` est `true` dans la config.
+Ajoutez le helper `{{ htmx_script() }}` **à la fin du `<body>`** de votre layout :
 
 ```html
-<head>
-    <title>{{ title }}</title>
+<body hx-boost="true" hx-target="#page-content" hx-swap="innerHTML" hx-select="#page-content">
+
+    <div id="page-content">
+        {{ component('navbar') }}
+        <main>{{ section('body') }}</main>
+        {{ component('footer') }}
+    </div>
+
+    <!-- HTMX en fin de body -->
     {{ htmx_script() }}
-</head>
+</body>
+```
+
+> [!IMPORTANT]
+> Le wrapper `#page-content` est essentiel pour que la barre de progression reste visible pendant les transitions.
+
+### 3. Barre de Progression
+
+Une barre de progression bleue apparaît automatiquement en haut de la page lors des requêtes HTMX.
+
+Pour la désactiver :
+```yaml
+frontend:
+  htmx:
+    progress_bar: false
 ```
 
 ---

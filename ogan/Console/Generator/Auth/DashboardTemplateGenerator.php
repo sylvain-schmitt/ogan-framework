@@ -44,6 +44,7 @@ class DashboardTemplateGenerator extends AbstractGenerator
     private function getLayoutTemplate(): string
     {
         $htmxScript = $this->htmx ? "\n    {{ htmx_script() }}" : '';
+        $hxBoostAttr = $this->htmx ? ' hx-boost="true" hx-target="#page-content" hx-swap="innerHTML" hx-select="#page-content"' : '';
 
         return <<<HTML
 {{ title = title ?? 'Dashboard' }}
@@ -55,29 +56,31 @@ class DashboardTemplateGenerator extends AbstractGenerator
     <title>{{ title }} - Delnyx</title>
     <link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
     <!-- Theme Script (in head to avoid FOUC) -->
-    <script src="{{ asset('/assets/js/theme.js') }}"></script>{$htmxScript}
+    <script src="{{ asset('/assets/js/theme.js') }}"></script>
 </head>
-<body class="h-full dark:bg-gray-900 transition-colors duration-200">
+<body class="h-full dark:bg-gray-900 transition-colors duration-200"{$hxBoostAttr}>
 
-    <div class="min-h-full">
-        
-        <!-- Sidebar -->
-        {{ component('dashboard/sidebar') }}
-
-        <!-- Main Content -->
-        <div class="md:pl-64 flex flex-col min-h-screen transition-all duration-300">
+    <div id="page-content">
+        <div class="min-h-full">
             
-            <!-- Navbar -->
-            {{ component('dashboard/navbar', ['user' => user]) }}
+            <!-- Sidebar -->
+            {{ component('dashboard/sidebar') }}
 
-            <!-- Main Content Area -->
-            <main class="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900">
-                {{ component('flashes') }}
+            <!-- Main Content -->
+            <div class="md:pl-64 flex flex-col min-h-screen transition-all duration-300">
+                
+                <!-- Navbar -->
+                {{ component('dashboard/navbar', ['user' => user]) }}
 
-                {{ section('content') }}
-            </main>
+                <!-- Main Content Area -->
+                <main class="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900">
+                    {{ component('flashes') }}
+
+                    {{ section('content') }}
+                </main>
+            </div>
         </div>
-    </div>
+    </div>{$htmxScript}
 </body>
 </html>
 HTML;

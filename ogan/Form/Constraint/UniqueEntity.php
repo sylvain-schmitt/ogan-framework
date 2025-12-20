@@ -74,7 +74,14 @@ class UniqueEntity implements ConstraintInterface
             return null;
         }
 
-        $existing = call_user_func([$this->modelClass, 'where'], $this->field, '=', $value);
+        $query = call_user_func([$this->modelClass, 'where'], $this->field, '=', $value);
+        
+        // If the result is a QueryBuilder, execute it
+        if (is_object($query) && method_exists($query, 'get')) {
+            $existing = $query->get();
+        } else {
+            $existing = $query;
+        }
         
         if (!empty($existing)) {
             $first = is_array($existing) ? reset($existing) : $existing;

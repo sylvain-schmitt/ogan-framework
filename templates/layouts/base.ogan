@@ -1,4 +1,4 @@
-{{ title = title ?? 'Mon site' }}
+{{ title = title ?? 'Mon App' }}
 <!DOCTYPE html>
 <html lang="fr" class="h-full">
 
@@ -6,14 +6,22 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>{{ title }}</title>
-
-		<!-- Tailwind CSS compilé -->
-		<link
-		rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
-
-		<!-- HTMX (conditionnel) -->
-		{{ htmx_script() }}
+		<link rel="stylesheet" href="{{ asset('/assets/css/app.css') }}">
 	</head>
+
+
+	{# ═══════════════════════════════════════════════════════════════════════════
+		📌 HTMX SUPPORT
+		Pour activer HTMX :
+		1. Remplacer la balise <body> ci-dessous par celle commentée plus bas
+		2. Décommenter </div> avant </body>
+		3. Décommenter htmx_script() avant </body>
+		4. Activer dans config/parameters.yaml : frontend.htmx.enabled: true
+		═══════════════════════════════════════════════════════════════════════════ #}
+
+	{# VERSION AVEC HTMX (à décommenter) :
+		<body class="min-h-screen flex flex-col bg-gray-50" hx-boost="true" hx-target="#page-content" hx-swap="innerHTML" hx-select="#page-content">
+			<div id="page-content"> #}
 
 	<body class="min-h-screen flex flex-col bg-gray-50">
 
@@ -26,6 +34,8 @@
 
 		{{ component('footer') }}
 
+	{# Décommenter pour HTMX : </div> #}
+		{# Décommenter pour HTMX : {{ htmx_script() }} #}
 	</body>
 
 </html>

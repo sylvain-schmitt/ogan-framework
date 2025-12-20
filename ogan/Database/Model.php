@@ -292,6 +292,51 @@ abstract class Model
 
     /**
      * ═══════════════════════════════════════════════════════════════════
+     * PAGINATION DES RÉSULTATS
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * Retourne un Paginator avec les résultats hydrartés en instances du modèle.
+     * 
+     * @param int $perPage Nombre d'éléments par page
+     * @param int|null $page Numéro de page (auto-détecté depuis $_GET si null)
+     * @return \Ogan\Database\Pagination\Paginator
+     * 
+     * @example
+     * $users = User::paginate(15);
+     * foreach ($users as $user) { ... }
+     * echo $users->links();
+     * 
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public static function paginate(int $perPage = 15, ?int $page = null): \Ogan\Database\Pagination\Paginator
+    {
+        // Auto-détection du numéro de page depuis $_GET
+        if ($page === null) {
+            $page = (int) ($_GET['page'] ?? 1);
+        }
+        $page = max(1, $page);
+
+        // Compte le total
+        $query = static::query();
+        $total = $query->count();
+
+        // Calcule l'offset
+        $offset = ($page - 1) * $perPage;
+
+        // Récupère les résultats bruts (pas hydratés)
+        $rawResults = static::query()
+            ->limit($perPage)
+            ->offset($offset)
+            ->get();
+
+        // Hydrate les résultats en instances du modèle
+        $items = static::hydrate($rawResults);
+
+        return new \Ogan\Database\Pagination\Paginator($items, $total, $perPage, $page);
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
      * HYDRATER DES RÉSULTATS EN INSTANCES DU MODÈLE
      * ═══════════════════════════════════════════════════════════════════
      * 

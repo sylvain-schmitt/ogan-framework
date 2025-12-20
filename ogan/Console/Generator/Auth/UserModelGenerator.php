@@ -153,9 +153,9 @@ class User extends Model implements UserInterface
         return $this;
     }
 
-    public function setRoles(array $roles): self
+    public function setRoles(?array $roles): self
     {
-        $this->roles = $roles;
+        $this->roles = $roles ?? ['ROLE_USER'];
         return $this;
     }
 

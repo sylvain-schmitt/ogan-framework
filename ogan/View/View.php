@@ -221,7 +221,7 @@ class View implements ViewInterface
         $this->viewHelper->setRouter($router);
     }
 
-    public function e(?string $value): string
+    public function e(mixed $value): string
     {
         return $this->viewHelper->escape($value);
     }

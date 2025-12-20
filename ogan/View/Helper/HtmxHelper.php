@@ -52,6 +52,7 @@ class HtmxHelper
      * ═══════════════════════════════════════════════════════════════════
      * 
      * Retourne la balise <script> pour charger HTMX.
+     * Inclut également la barre de progression si activée.
      * Ne retourne rien si HTMX est désactivé.
      */
     public static function script(): string
@@ -61,8 +62,113 @@ class HtmxHelper
         }
 
         $scriptPath = Config::get('frontend.htmx.script', '/js/htmx.min.js');
+        $progressBar = Config::get('frontend.htmx.progress_bar', true);
         
-        return '<script src="' . htmlspecialchars($scriptPath) . '"></script>';
+        $html = '<script src="' . htmlspecialchars($scriptPath) . '"></script>';
+        
+        // Ajouter la barre de progression si activée
+        if ($progressBar) {
+            $html .= self::progressBarStyles();
+            $html .= self::progressBarScript();
+        }
+        
+        return $html;
+    }
+
+    /**
+     * STYLES CSS POUR LA BARRE DE PROGRESSION
+     */
+    private static function progressBarStyles(): string
+    {
+        return <<<'CSS'
+<style>
+.htmx-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd);
+    z-index: 9999;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+    pointer-events: none;
+}
+.htmx-progress.htmx-progress-loading {
+    animation: htmx-progress-animate 1.5s ease-in-out infinite;
+}
+@keyframes htmx-progress-animate {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 85%; }
+}
+.htmx-progress.htmx-progress-done {
+    width: 100% !important;
+    animation: htmx-progress-complete 0.4s ease-out forwards;
+}
+@keyframes htmx-progress-complete {
+    0% { width: 100%; opacity: 1; }
+    50% { width: 100%; opacity: 1; }
+    100% { width: 100%; opacity: 0; }
+}
+</style>
+CSS;
+    }
+
+    private static function progressBarScript(): string
+    {
+        return <<<'JS'
+<script>
+(function() {
+    // Attendre que le DOM soit prêt
+    function init() {
+        // Créer la barre de progression
+        let bar = document.getElementById('htmx-progress-bar');
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.className = 'htmx-progress';
+            bar.id = 'htmx-progress-bar';
+            document.body.appendChild(bar);
+        }
+    }
+
+    // Écouter les événements HTMX sur document (capture phase)
+    document.addEventListener('htmx:beforeRequest', function(evt) {
+        const bar = document.getElementById('htmx-progress-bar');
+        if (bar) {
+            bar.style.opacity = '1';
+            bar.classList.remove('htmx-progress-done');
+            bar.classList.add('htmx-progress-loading');
+        }
+    }, true);
+
+    document.addEventListener('htmx:afterRequest', function(evt) {
+        const bar = document.getElementById('htmx-progress-bar');
+        if (bar) {
+            setTimeout(function() {
+                bar.classList.remove('htmx-progress-loading');
+                bar.classList.add('htmx-progress-done');
+            }, 300);
+        }
+    }, true);
+
+    document.addEventListener('htmx:responseError', function(evt) {
+        const bar = document.getElementById('htmx-progress-bar');
+        if (bar) {
+            bar.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
+            bar.classList.remove('htmx-progress-loading');
+            bar.classList.add('htmx-progress-done');
+        }
+    }, true);
+
+    // Initialiser quand le DOM est prêt
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+JS;
     }
 
     /**

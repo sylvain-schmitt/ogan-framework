@@ -140,6 +140,12 @@ class TemplateCompiler
         $this->initializeCompilers();
 
         // ─────────────────────────────────────────────────────────────
+        // ÉTAPE 0 : Supprimer les commentaires Ogan {# ... #}
+        // Supporte les commentaires sur une ligne et multi-lignes
+        // ─────────────────────────────────────────────────────────────
+        $content = preg_replace('/\{#.*?#\}/s', '', $content);
+
+        // ─────────────────────────────────────────────────────────────
         // ÉTAPE 1 : Traiter les structures de contrôle (if, foreach, etc.)
         // ─────────────────────────────────────────────────────────────
         $content = $this->controlStructureCompiler->compile($content);

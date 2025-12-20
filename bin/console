@@ -56,6 +56,10 @@ registerMigrateCommands($app);
 require $commandsDir . '/auth.php';
 registerAuthCommands($app);
 
+// Pagination
+require $commandsDir . '/pagination.php';
+registerPaginationCommands($app);
+
 // Cache
 require $commandsDir . '/cache.php';
 registerCacheCommands($app);

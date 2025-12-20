@@ -39,17 +39,7 @@ class DashboardComponentGenerator extends AbstractGenerator
             }
         }
 
-        // Flashes component
-        $componentsDir = $projectRoot . '/templates/components';
-        $this->ensureDirectory($componentsDir);
-        
-        $flashesPath = $componentsDir . '/flashes.ogan';
-        if (!$this->fileExists($flashesPath) || $force) {
-            $this->writeFile($flashesPath, $this->getFlashesTemplate());
-            $generated[] = 'templates/components/flashes.ogan';
-        } else {
-            $skipped[] = 'templates/components/flashes.ogan (existe déjà)';
-        }
+        // Note: flashes.ogan fait partie du framework de base (pas généré ici)
 
         return ['generated' => $generated, 'skipped' => $skipped];
     }

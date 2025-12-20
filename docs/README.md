@@ -15,6 +15,7 @@ Bienvenue dans la documentation complète du framework Ogan.
 - **[Docker](guides/docker.md)** - Démarrage rapide avec Docker (MySQL, PostgreSQL)
 - **[Explications](guides/explications.md)** - Explications détaillées (ORM, .env, cookies.txt, etc.)
 - **[Bases de Données](guides/databases.md)** - Support multi-bases de données (MySQL, PostgreSQL, SQLite, SQL Server)
+- **[Pagination](guides/pagination.md)** - Pagination intégrée avec rendu Tailwind
 
 ## 🎯 Exemples
 
