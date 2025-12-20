@@ -6,8 +6,10 @@ Le framework Ogan inclut un système de génération de code pour créer rapidem
 
 - [Introduction](#introduction)
 - [Générer un contrôleur](#générer-un-contrôleur)
+- [Générer une API REST](#générer-une-api-rest)
 - [Générer un FormType](#générer-un-formtype)
 - [Générer un modèle](#générer-un-modèle)
+- [Générer un seeder](#générer-un-seeder)
 - [Générer tout en une commande](#générer-tout-en-une-commande)
 - [Options](#options)
 
@@ -31,6 +33,9 @@ php bin/console make:model [Name]        # Générer un modèle (mode interactif
 php bin/console make:all [Name]          # Générer tout (modèle + repository + form + contrôleur)
 php bin/console make:auth [--htmx]       # Générer le système d'authentification complet
 php bin/console make:migration <Model>   # Générer une migration (alias de migrate:make)
+php bin/console make:api <Model>         # Générer un controller API REST CRUD
+php bin/console make:seeder <Name>       # Générer un fichier seeder
+php bin/console db:seed [SeederName]     # Exécuter les seeders
 ```
 
 ### Aide intégrée
@@ -131,6 +136,164 @@ class UserController extends AbstractController
 
     // ... edit, update, delete
 }
+```
+
+---
+
+## 🔌 Générer une API REST
+
+### Commande
+
+```bash
+php bin/console make:api User
+# ou avec écrasement
+php bin/console make:api User --force
+```
+
+### Ce qui est généré
+
+Le générateur crée un controller API REST complet avec :
+- ✅ 5 endpoints CRUD (index, show, store, update, destroy)
+- ✅ Réponses JSON standardisées
+- ✅ Gestion des erreurs 404
+- ✅ Validation du body JSON
+
+### Endpoints générés
+
+| Méthode | Route | Action | Description |
+|---------|-------|--------|-------------|
+| GET | `/api/users` | `index()` | Liste tous les éléments |
+| GET | `/api/users/{id}` | `show()` | Affiche un élément |
+| POST | `/api/users` | `store()` | Crée un élément |
+| PUT | `/api/users/{id}` | `update()` | Met à jour un élément |
+| DELETE | `/api/users/{id}` | `destroy()` | Supprime un élément |
+
+### Exemple de sortie
+
+```bash
+🔌 Génération de l'API REST pour User...
+
+✅ Fichiers générés:
+   ├─ src/Controller/Api/UserController.php
+
+📍 Endpoints disponibles:
+   ├─ GET    /api/users          → Liste
+   ├─ GET    /api/users/{id}     → Afficher
+   ├─ POST   /api/users          → Créer
+   ├─ PUT    /api/users/{id}     → Modifier
+   └─ DELETE /api/users/{id}     → Supprimer
+```
+
+### Structure générée
+
+```php
+<?php
+
+namespace App\Controller\Api;
+
+use App\Model\User;
+use Ogan\Controller\ApiController;
+use Ogan\Http\Response;
+use Ogan\Router\Attributes\Route;
+
+class UserController extends ApiController
+{
+    #[Route(path: '/api/users', methods: ['GET'], name: 'api_user_index')]
+    public function index(): Response
+    {
+        return $this->success(User::all());
+    }
+
+    #[Route(path: '/api/users/{id}', methods: ['GET'], name: 'api_user_show')]
+    public function show(int $id): Response
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return $this->notFound('User not found');
+        }
+        return $this->success($user);
+    }
+
+    // ... store(), update(), destroy()
+}
+```
+
+---
+
+## 🌱 Générer un seeder
+
+### Commande
+
+```bash
+php bin/console make:seeder Article
+# ou avec écrasement
+php bin/console make:seeder Article --force
+```
+
+### Ce qui est généré
+
+Le générateur crée un fichier seeder pour peupler la base de données :
+- ✅ Extension de la classe `Seeder`
+- ✅ Méthode `run()` avec structure de base
+- ✅ Helpers pour affichage console (info, success, error)
+
+### Exécuter les seeders
+
+```bash
+# Exécuter tous les seeders
+php bin/console db:seed
+
+# Exécuter un seeder spécifique
+php bin/console db:seed ArticleSeeder
+```
+
+### Exemple de sortie
+
+```bash
+🌱 Génération du seeder pour Article...
+
+✅ Fichiers générés:
+   ├─ database/seeders/ArticleSeeder.php
+
+📍 Exécuter le seeder:
+   php bin/console db:seed ArticleSeeder
+```
+
+### Structure générée
+
+```php
+<?php
+
+namespace Database\Seeders;
+
+use App\Model\Article;
+use Ogan\Database\Seeder;
+
+class ArticleSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $this->info("Seeding Articles...");
+
+        for ($i = 1; $i <= 10; $i++) {
+            $article = new Article();
+            $article->setTitle("Article {$i}");
+            $article->save();
+        }
+
+        $this->success("10 Articles créés.");
+    }
+}
+```
+
+### Méthode create() helper
+
+```php
+// Créer 10 utilisateurs avec un callback
+$this->create(User::class, [
+    'name' => fn($i) => "User {$i}",
+    'email' => fn($i) => "user{$i}@example.com",
+], 10);
 ```
 
 ---

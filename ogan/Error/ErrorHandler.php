@@ -61,6 +61,13 @@ class ErrorHandler
      */
     public function handleException(Throwable $exception): void
     {
+        // ═══════════════════════════════════════════════════════════════
+        // LOGGING AUTOMATIQUE - Comme Symfony/Monolog
+        // ═══════════════════════════════════════════════════════════════
+        if (function_exists('log_exception')) {
+            log_exception($exception);
+        }
+
         // Détermine le code HTTP selon le type d'exception
         $statusCode = $this->getStatusCode($exception);
         http_response_code($statusCode);

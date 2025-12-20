@@ -115,6 +115,11 @@ class QueryBuilder
     private ?int $cacheTtl = null;
 
     /**
+     * @var bool Inclure les enregistrements soft-deleted
+     */
+    private bool $includeSoftDeleted = false;
+
+    /**
      * ═══════════════════════════════════════════════════════════════════
      * CONSTRUCTEUR
      * ═══════════════════════════════════════════════════════════════════
@@ -208,6 +213,77 @@ class QueryBuilder
             'value' => $value
         ];
         return $this;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * AJOUTER UNE CONDITION WHERE NULL
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * @param string $column Colonne
+     * @return self
+     * 
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function whereNull(string $column): self
+    {
+        $this->wheres[] = [
+            'type' => 'AND',
+            'column' => $column,
+            'operator' => 'IS NULL',
+            'value' => null
+        ];
+        return $this;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * AJOUTER UNE CONDITION WHERE NOT NULL
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * @param string $column Colonne
+     * @return self
+     * 
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function whereNotNull(string $column): self
+    {
+        $this->wheres[] = [
+            'type' => 'AND',
+            'column' => $column,
+            'operator' => 'IS NOT NULL',
+            'value' => null
+        ];
+        return $this;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * INCLURE LES ENREGISTREMENTS SOFT-DELETED
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * @return self
+     * 
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function withSoftDeletes(): self
+    {
+        $this->includeSoftDeleted = true;
+        return $this;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * VÉRIFIER SI LES SOFT DELETES SONT INCLUS
+     * ═══════════════════════════════════════════════════════════════════
+     * 
+     * @return bool
+     * 
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    public function includesSoftDeleted(): bool
+    {
+        return $this->includeSoftDeleted;
     }
 
     /**
@@ -638,9 +714,16 @@ class QueryBuilder
         $conditions = [];
 
         foreach ($this->wheres as $index => $where) {
-            $paramName = "param_{$index}";
-            $conditions[] = ($index > 0 ? " {$where['type']} " : '') . "{$where['column']} {$where['operator']} :{$paramName}";
-            $this->params[$paramName] = $where['value'];
+            $prefix = ($index > 0 ? " {$where['type']} " : '');
+            
+            // IS NULL et IS NOT NULL ne nécessitent pas de paramètre
+            if ($where['operator'] === 'IS NULL' || $where['operator'] === 'IS NOT NULL') {
+                $conditions[] = $prefix . "{$where['column']} {$where['operator']}";
+            } else {
+                $paramName = "param_{$index}";
+                $conditions[] = $prefix . "{$where['column']} {$where['operator']} :{$paramName}";
+                $this->params[$paramName] = $where['value'];
+            }
         }
 
         return " WHERE " . implode('', $conditions);

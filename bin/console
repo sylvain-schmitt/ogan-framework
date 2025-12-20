@@ -64,5 +64,13 @@ registerPaginationCommands($app);
 require $commandsDir . '/cache.php';
 registerCacheCommands($app);
 
+// API
+require $commandsDir . '/api.php';
+registerApiCommands($app);
+
+// Seeder
+require $commandsDir . '/seeder.php';
+registerSeederCommands($app);
+
 // Exécuter l'application
 $app->run($argv);

@@ -46,6 +46,7 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 
 ### 3. Query Builder Avancé
 - ✅ Déjà implémenté (basique)
+- ✅ **TERMINÉ** : `whereNull()`, `whereNotNull()`, `orWhere()`
 - 💡 **Amélioration** : Support des sous-requêtes
 - 💡 **Amélioration** : Support des unions
 - 💡 **Amélioration** : Support des agrégations (SUM, AVG, COUNT, etc.)
@@ -54,6 +55,12 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 - ✅ **TERMINÉ** : Méthode `cache(ttl)` sur le QueryBuilder
 - ✅ **TERMINÉ** : Cache automatique des résultats de requêtes
 - 💡 **Amélioration** : Invalidation intelligente du cache
+
+### 5. Soft Delete
+- ✅ **TERMINÉ** : Trait `SoftDeletes` pour suppression logique
+- ✅ **TERMINÉ** : Méthodes `delete()`, `forceDelete()`, `restore()`, `trashed()`
+- ✅ **TERMINÉ** : Scopes `withTrashed()`, `onlyTrashed()`, `withoutTrashed()`
+- ✅ **TERMINÉ** : Documentation `docs/guides/soft-delete.md`
 
 ## 🎨 Templates
 
@@ -159,6 +166,8 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 - ✅ **TERMINÉ** : Mode interactif pour make:model (détection types et relations)
 - ✅ **TERMINÉ** : Contraintes auto dans make:form (Email, MinLength)
 - ✅ **TERMINÉ** : Relations bidirectionnelles auto dans make:model
+- ✅ **TERMINÉ** : Commande `make:api` pour générer des controllers API REST
+- ✅ **TERMINÉ** : Commande `make:seeder` et `db:seed` pour les seeders
 - 💡 **Amélioration** : Lancer les tests
 - 💡 **Amélioration** : Auto-complétion bash/zsh
 - 💡 **Amélioration** : Commande make:templates (générer les vues)
@@ -215,8 +224,10 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 - 💡 **Amélioration** : Appliquer les principes SOLID à d'autres composants
 
 ### 2. Events & Listeners
-- 💡 **Amélioration** : Système d'événements (Event Dispatcher)
-- 💡 **Amélioration** : Événements prédéfinis (kernel.request, kernel.response, etc.)
+- ✅ **TERMINÉ** : Système d'événements (`EventDispatcher`)
+- ✅ **TERMINÉ** : Événements prédéfinis (`kernel.request`, `kernel.response`, `kernel.exception`, `kernel.controller`, `kernel.terminate`)
+- ✅ **TERMINÉ** : Classe `Event` avec `stopPropagation()`
+- ✅ **TERMINÉ** : Support des priorités dans les listeners
 - 💡 **Amélioration** : Support des listeners asynchrones
 
 ### 3. Command Bus
@@ -232,7 +243,9 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 ## 🌐 API
 
 ### 1. API REST
-- 💡 **Amélioration** : Resource controllers
+- ✅ **TERMINÉ** : `ApiController` avec méthodes JSON (`json()`, `success()`, `error()`, `notFound()`, etc.)
+- ✅ **TERMINÉ** : Sérialisation des modèles (`toArray()`, `toJson()`, `$hidden`, `$visible`)
+- ✅ **TERMINÉ** : Commande `make:api` pour générer des controllers CRUD
 - 💡 **Amélioration** : API versioning
 - 💡 **Amélioration** : Rate limiting par API key
 
@@ -249,9 +262,12 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 ## 📊 Monitoring
 
 ### 1. Logging Avancé
-- ✅ Déjà implémenté (PSR-3)
-- 💡 **Amélioration** : Logs structurés (JSON)
-- 💡 **Amélioration** : Rotation automatique des logs
+- ✅ **TERMINÉ** : Logger PSR-3 complet
+- ✅ **TERMINÉ** : Logs structurés (format JSON)
+- ✅ **TERMINÉ** : Rotation automatique des logs (10 Mo, 5 fichiers)
+- ✅ **TERMINÉ** : Channels multiples (app, security, database, etc.)
+- ✅ **TERMINÉ** : Helpers globaux : `logger()`, `log_exception()`, `log_info()`, etc.
+- ✅ **TERMINÉ** : Logging automatique des exceptions dans `ErrorHandler`
 - 💡 **Amélioration** : Envoi vers services externes (Sentry, Loggly)
 
 ### 2. Métriques
@@ -285,20 +301,33 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 6. ✅ CLI améliorée (make:controller interactif, make:model avec relations, make:auth --htmx)
 7. ✅ Intégration HTMX native
 
-### Moyen Terme (en cours)
-1. 💡 Event Dispatcher
+### Moyen Terme (✅ TERMINÉ)
+1. ✅ ~~Event Dispatcher~~ **TERMINÉ** (EventDispatcher, KernelEvents)
 2. ✅ ~~Pagination intégrée~~ **TERMINÉ**
 3. ✅ ~~make:templates~~ **TERMINÉ**
-4. 💡 Soft Delete
-5. 💡 make:seeder
+4. ✅ ~~Soft Delete~~ **TERMINÉ** (Trait SoftDeletes, withTrashed, onlyTrashed)
+5. ✅ ~~make:seeder~~ **TERMINÉ** (make:seeder, db:seed)
+6. ✅ ~~API REST Support~~ **TERMINÉ** (ApiController, make:api, toArray/toJson)
+7. ✅ ~~Logging amélioré~~ **TERMINÉ** (JSON format, channels, rotation)
 
-### Long Terme
+### Long Terme / v2.0 Roadmap
 1. 💡 Support GraphQL
-2. 💡 Queue / Jobs
-3. 💡 Monitoring avancé
+2. 💡 Queue / Jobs (files d'attente asynchrones)
+3. 💡 Monitoring avancé (Prometheus, Grafana)
 4. 💡 Internationalisation (i18n)
+5. 💡 **Support packages Composer externes** :
+   - Intégration facile de packages tiers
+   - Service Providers (comme Laravel)
+   - Auto-discovery des packages
+6. 💡 **Packages officiels** :
+   - `ogan/mail` : Envoi d'emails (SMTP, Mailgun, etc.)
+   - `ogan/queue` : Files d'attente (Redis, Database)
+   - `ogan/storage` : Abstraction filesystem (local, S3, etc.)
+7. 💡 WebSockets / Real-time
+8. 💡 Tests fonctionnels automatisés
 
 ---
 
 **Note** : Ces améliorations sont des suggestions. Le framework est déjà très fonctionnel et peut être utilisé en production pour des projets simples à moyens. Les améliorations peuvent être ajoutées progressivement selon les besoins.
 
+**Version actuelle** : v1.0 (Décembre 2024)

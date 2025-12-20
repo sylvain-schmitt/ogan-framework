@@ -71,12 +71,29 @@ abstract class AbstractController
 
     /**
      * Réponse JSON simple.
+     * 
+     * @param mixed $data Données à encoder
+     * @param int $status Code HTTP
+     * @return Response
      */
-    protected function json($data): void
+    protected function json($data, int $status = 200): Response
     {
-        header('Content-Type: application/json');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        exit;
+        // Si c'est un modèle, le convertir en array
+        if (is_object($data) && method_exists($data, 'toArray')) {
+            $data = $data->toArray();
+        }
+        
+        // Si c'est une collection de modèles
+        if (is_array($data) && isset($data[0]) && is_object($data[0]) && method_exists($data[0], 'toArray')) {
+            $data = array_map(fn($item) => $item->toArray(), $data);
+        }
+
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        
+        $response = new Response($json, $status);
+        $response->setHeader('Content-Type', 'application/json');
+        
+        return $response;
     }
 
     /**

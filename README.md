@@ -17,10 +17,14 @@ Ogan est un **framework PHP pédagogique** moderne qui démontre les meilleures 
 - 🎨 **Tailwind CSS v4** intégré avec CLI standalone
 - 📦 **Système de formulaires** complet avec 11 types de champs
 - 🔐 **Sécurité** : CSRF, sessions, password hashing
-- 🗄️ **ORM maison** avec QueryBuilder et relations
+- 🗄️ **ORM maison** avec QueryBuilder, relations et **Soft Delete**
 - 🔄 **Migrations** de base de données
 - 🎯 **Dependency Injection** avec autowiring
 - 🔧 **Console CLI** avec générateurs de code
+- 🔌 **API REST** : ApiController, sérialisation, `make:api`
+- 📢 **Event Dispatcher** : événements kernel personnalisables
+- 📝 **Logging** : PSR-3, channels, rotation automatique
+- 🌱 **Seeders** : peuplement de base de données
 
 ## 📁 Structure du Projet
 

@@ -71,6 +71,17 @@ abstract class Model
     protected static ?string $primaryKey = 'id';
 
     /**
+     * @var array Attributs à cacher lors de la serialization (ex: password)
+     */
+    protected array $hidden = [];
+
+    /**
+     * @var array Attributs à inclure exclusivement lors de la serialization
+     * Si non vide, seuls ces attributs seront inclus
+     */
+    protected array $visible = [];
+
+    /**
      * ═══════════════════════════════════════════════════════════════════
      * CONSTRUCTEUR
      * ═══════════════════════════════════════════════════════════════════
@@ -182,7 +193,8 @@ abstract class Model
      */
     public static function find(int $id): ?static
     {
-        $result = QueryBuilder::table(static::getTableName())
+        // Utiliser static::query() pour permettre l'override par des traits (ex: SoftDeletes)
+        $result = static::query()
             ->where(static::$primaryKey, '=', $id)
             ->first();
 
@@ -208,7 +220,8 @@ abstract class Model
      */
     public static function all(): array
     {
-        $results = QueryBuilder::table(static::getTableName())->get();
+        // Utiliser static::query() pour permettre l'override par des traits (ex: SoftDeletes)
+        $results = static::query()->get();
         return static::hydrate($results);
     }
 
@@ -583,20 +596,6 @@ abstract class Model
 
     /**
      * ═══════════════════════════════════════════════════════════════════
-     * RÉCUPÉRER TOUS LES ATTRIBUTS
-     * ═══════════════════════════════════════════════════════════════════
-     * 
-     * @return array Tous les attributs
-     * 
-     * ═══════════════════════════════════════════════════════════════════
-     */
-    public function toArray(): array
-    {
-        return $this->attributes;
-    }
-
-    /**
-     * ═══════════════════════════════════════════════════════════════════
      * RÉCUPÉRER LE NOM DE LA TABLE
      * ═══════════════════════════════════════════════════════════════════
      * 
@@ -744,6 +743,133 @@ abstract class Model
     protected function manyToMany(string $related, string $pivotTable, string $pivotForeignKey, string $pivotRelatedKey, string $localKey = 'id'): \Ogan\Database\Relations\ManyToMany
     {
         return new \Ogan\Database\Relations\ManyToMany($this, $related, $pivotTable, $pivotForeignKey, $pivotRelatedKey, $localKey);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // SERIALIZATION (API JSON)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Convertit le modèle en tableau pour l'API
+     * 
+     * Respecte $hidden et $visible :
+     * - Si $visible est défini, seuls ces attributs sont inclus
+     * - Si $hidden est défini, ces attributs sont exclus
+     * 
+     * @param bool $withRelations Inclure les relations chargées
+     * @return array
+     */
+    public function toArray(bool $withRelations = true): array
+    {
+        // Synchroniser les propriétés vers attributs
+        $this->syncAttributesFromProperties();
+        
+        $result = $this->filterAttributes($this->attributes);
+        
+        // Ajouter les relations chargées si demandé
+        if ($withRelations) {
+            $result = $this->addLoadedRelations($result);
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Convertit le modèle en JSON
+     * 
+     * @param int $options Options json_encode (JSON_PRETTY_PRINT, etc.)
+     * @param bool $withRelations Inclure les relations chargées
+     * @return string
+     */
+    public function toJson(int $options = 0, bool $withRelations = true): string
+    {
+        return json_encode($this->toArray($withRelations), $options | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Filtre les attributs selon $hidden et $visible
+     */
+    protected function filterAttributes(array $attributes): array
+    {
+        // Si $visible est défini, ne garder que ces attributs
+        if (!empty($this->visible)) {
+            $attributes = array_intersect_key($attributes, array_flip($this->visible));
+        }
+        
+        // Supprimer les attributs cachés
+        foreach ($this->hidden as $key) {
+            unset($attributes[$key]);
+        }
+        
+        return $attributes;
+    }
+
+    /**
+     * Ajoute les relations chargées au tableau
+     */
+    protected function addLoadedRelations(array $result): array
+    {
+        // Parcourir les propriétés pour trouver les relations chargées
+        $reflection = new \ReflectionClass($this);
+        foreach ($reflection->getProperties() as $property) {
+            $property->setAccessible(true);
+            $name = $property->getName();
+            $value = $property->getValue($this);
+            
+            // Si c'est une relation (collection ou modèle), la serialiser
+            if ($value instanceof Model) {
+                $result[$name] = $value->toArray(false); // Éviter récursion infinie
+            } elseif (is_array($value) && isset($value[0]) && $value[0] instanceof Model) {
+                $result[$name] = array_map(fn($m) => $m->toArray(false), $value);
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Retourne tous les attributs bruts
+     */
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
+
+    /**
+     * Cache temporairement des attributs pour cette instance
+     */
+    public function makeHidden(array|string $attributes): self
+    {
+        $this->hidden = array_merge($this->hidden, (array) $attributes);
+        return $this;
+    }
+
+    /**
+     * Rend des attributs visibles pour cette instance
+     */
+    public function makeVisible(array|string $attributes): self
+    {
+        $this->hidden = array_diff($this->hidden, (array) $attributes);
+        $this->visible = array_merge($this->visible, (array) $attributes);
+        return $this;
+    }
+
+    /**
+     * Définit les attributs cachés
+     */
+    public function setHidden(array $hidden): self
+    {
+        $this->hidden = $hidden;
+        return $this;
+    }
+
+    /**
+     * Définit les attributs visibles
+     */
+    public function setVisible(array $visible): self
+    {
+        $this->visible = $visible;
+        return $this;
     }
 }
 

@@ -65,24 +65,78 @@ class Logger implements LoggerInterface
     private string $minLevel;
 
     /**
+     * @var string Channel/catégorie actuel (app, security, queries, etc.)
+     */
+    private string $channel;
+
+    /**
+     * @var bool Utiliser le format JSON au lieu du format texte
+     */
+    private bool $jsonFormat;
+
+    /**
+     * @var int Taille max du fichier en octets (10 Mo par défaut)
+     */
+    private int $maxFileSize;
+
+    /**
+     * @var int Nombre max de fichiers de rotation
+     */
+    private int $maxFiles;
+
+    /**
      * ═══════════════════════════════════════════════════════════════════
      * CONSTRUCTEUR
      * ═══════════════════════════════════════════════════════════════════
      * 
      * @param string $logPath Répertoire où écrire les logs
      * @param string $minLevel Niveau minimum (par défaut 'debug' en dev, 'info' en prod)
+     * @param string $channel Canal/catégorie (app, security, queries, etc.)
+     * @param bool $jsonFormat Utiliser le format JSON
+     * @param int $maxFileSize Taille max avant rotation (10 Mo par défaut)
+     * @param int $maxFiles Nombre de fichiers de rotation
      * 
      * ═══════════════════════════════════════════════════════════════════
      */
-    public function __construct(string $logPath, string $minLevel = 'debug')
-    {
+    public function __construct(
+        string $logPath, 
+        string $minLevel = 'debug',
+        string $channel = 'app',
+        bool $jsonFormat = false,
+        int $maxFileSize = 10485760, // 10 Mo
+        int $maxFiles = 5
+    ) {
         $this->logPath = rtrim($logPath, '/');
         $this->minLevel = $minLevel;
+        $this->channel = $channel;
+        $this->jsonFormat = $jsonFormat;
+        $this->maxFileSize = $maxFileSize;
+        $this->maxFiles = $maxFiles;
 
         // Créer le répertoire s'il n'existe pas
         if (!is_dir($this->logPath)) {
             mkdir($this->logPath, 0755, true);
         }
+    }
+
+    /**
+     * Crée un logger pour un channel spécifique
+     */
+    public function channel(string $name): self
+    {
+        $logger = clone $this;
+        $logger->channel = $name;
+        return $logger;
+    }
+
+    /**
+     * Active le format JSON
+     */
+    public function withJsonFormat(bool $enabled = true): self
+    {
+        $logger = clone $this;
+        $logger->jsonFormat = $enabled;
+        return $logger;
     }
 
     /**
@@ -113,7 +167,9 @@ class Logger implements LoggerInterface
         }
 
         // Formater le message
-        $formatted = $this->formatMessage($level, $message, $context);
+        $formatted = $this->jsonFormat 
+            ? $this->formatMessageJson($level, $message, $context)
+            : $this->formatMessage($level, $message, $context);
 
         // Écrire dans le fichier
         $this->writeToFile($level, $formatted);
@@ -121,15 +177,7 @@ class Logger implements LoggerInterface
 
     /**
      * ═══════════════════════════════════════════════════════════════════
-     * FORMATER LE MESSAGE
-     * ═══════════════════════════════════════════════════════════════════
-     * 
-     * Formate le message avec timestamp, niveau et contexte.
-     * 
-     * FORMAT :
-     * --------
-     * [2024-01-15 10:30:45] LEVEL: Message {"key":"value"}
-     * 
+     * FORMATER LE MESSAGE (TEXTE)
      * ═══════════════════════════════════════════════════════════════════
      */
     private function formatMessage(string $level, string $message, array $context): string
@@ -138,7 +186,6 @@ class Logger implements LoggerInterface
         $levelUpper = strtoupper($level);
 
         // Remplacer les placeholders dans le message
-        // Ex: "User {user_id} logged in" → "User 123 logged in"
         $message = $this->interpolate($message, $context);
 
         // Ajouter le contexte en JSON si présent
@@ -147,22 +194,40 @@ class Logger implements LoggerInterface
             $contextJson = ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
-        return "[{$timestamp}] {$levelUpper}: {$message}{$contextJson}" . PHP_EOL;
+        return "[{$timestamp}] {$this->channel}.{$levelUpper}: {$message}{$contextJson}" . PHP_EOL;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * FORMATER LE MESSAGE (JSON)
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    private function formatMessageJson(string $level, string $message, array $context): string
+    {
+        $entry = [
+            'timestamp' => date('c'), // ISO 8601
+            'channel' => $this->channel,
+            'level' => strtoupper($level),
+            'level_name' => $level,
+            'message' => $this->interpolate($message, $context),
+            'context' => $context ?: new \stdClass(),
+        ];
+
+        // Ajouter des infos de requête si disponibles
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $entry['extra'] = [
+                'url' => $_SERVER['REQUEST_URI'] ?? '',
+                'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? '',
+            ];
+        }
+
+        return json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
     }
 
     /**
      * ═══════════════════════════════════════════════════════════════════
      * INTERPOLER LES PLACEHOLDERS
-     * ═══════════════════════════════════════════════════════════════════
-     * 
-     * Remplace {key} par la valeur du contexte.
-     * 
-     * EXEMPLE :
-     * ---------
-     * Message: "User {user_id} logged in"
-     * Contexte: ['user_id' => 123]
-     * Résultat: "User 123 logged in"
-     * 
      * ═══════════════════════════════════════════════════════════════════
      */
     private function interpolate(string $message, array $context): string
@@ -181,34 +246,53 @@ class Logger implements LoggerInterface
      * ═══════════════════════════════════════════════════════════════════
      * ÉCRIRE DANS LE FICHIER
      * ═══════════════════════════════════════════════════════════════════
-     * 
-     * Écrit le message dans le fichier de log approprié.
-     * 
-     * ORGANISATION DES FICHIERS :
-     * ---------------------------
-     * - app.log : Tous les logs
-     * - error.log : Erreurs uniquement (error, critical, alert, emergency)
-     * - debug.log : Debug uniquement (si niveau debug)
-     * 
-     * ═══════════════════════════════════════════════════════════════════
      */
     private function writeToFile(string $level, string $message): void
     {
-        // Fichier principal (tous les logs)
-        $appLogFile = $this->logPath . '/app.log';
-        file_put_contents($appLogFile, $message, FILE_APPEND | LOCK_EX);
+        // Fichier du channel
+        $logFile = $this->logPath . '/' . $this->channel . '.log';
+        
+        // Rotation si nécessaire
+        $this->rotateIfNeeded($logFile);
+        
+        // Écrire dans le fichier du channel
+        file_put_contents($logFile, $message, FILE_APPEND | LOCK_EX);
 
         // Fichier d'erreurs (seulement pour les erreurs)
         if (in_array($level, ['error', 'critical', 'alert', 'emergency'])) {
             $errorLogFile = $this->logPath . '/error.log';
+            $this->rotateIfNeeded($errorLogFile);
             file_put_contents($errorLogFile, $message, FILE_APPEND | LOCK_EX);
         }
+    }
 
-        // Fichier de debug (seulement pour debug)
-        if ($level === 'debug') {
-            $debugLogFile = $this->logPath . '/debug.log';
-            file_put_contents($debugLogFile, $message, FILE_APPEND | LOCK_EX);
+    /**
+     * ═══════════════════════════════════════════════════════════════════
+     * ROTATION DES FICHIERS
+     * ═══════════════════════════════════════════════════════════════════
+     */
+    private function rotateIfNeeded(string $logFile): void
+    {
+        if (!file_exists($logFile)) {
+            return;
         }
+
+        if (filesize($logFile) < $this->maxFileSize) {
+            return;
+        }
+
+        // Rotation : décaler les fichiers existants
+        for ($i = $this->maxFiles - 1; $i >= 1; $i--) {
+            $current = $logFile . '.' . $i;
+            $next = $logFile . '.' . ($i + 1);
+            
+            if (file_exists($current)) {
+                rename($current, $next);
+            }
+        }
+
+        // Renommer le fichier actuel
+        rename($logFile, $logFile . '.1');
     }
 
     // ─────────────────────────────────────────────────────────────────
