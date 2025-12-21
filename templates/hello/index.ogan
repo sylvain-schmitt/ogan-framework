@@ -70,8 +70,8 @@
 				<div class="text-gray-500 text-sm mt-1">Dépendances</div>
 			</div>
 			<div>
-				<div class="text-3xl font-bold text-indigo-600">&lt;50KB</div>
-				<div class="text-gray-500 text-sm mt-1">Taille du core</div>
+				<div class="text-3xl font-bold text-indigo-600">~35K</div>
+				<div class="text-gray-500 text-sm mt-1">Lignes de code</div>
 			</div>
 			<div>
 				<div class="text-3xl font-bold text-indigo-600">PHP 8.2+</div>
