@@ -3,7 +3,7 @@
 		<div
 			class="flex justify-between items-center h-16">
 			<!-- Logo -->
-			<a href="{{ route('hello_index') }}" class="flex items-center space-x-2">
+			<a href="{{ path('hello_index') }}" class="flex items-center space-x-2">
 				<span class="text-2xl">🚀</span>
 				<span class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Ogan</span>
 			</a>
