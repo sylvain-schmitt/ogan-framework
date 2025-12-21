@@ -1,6 +1,7 @@
 /**
  * Theme Toggle (Dark Mode)
  * Handles dark mode initialization and toggling with localStorage persistence
+ * Compatible HTMX: réinitialise après swap de contenu
  */
 (function () {
     'use strict';
@@ -43,23 +44,36 @@
         updateIcons();
     }
 
+    // Setup toggle button (réutilisable pour HTMX)
+    function setupToggleButton() {
+        updateIcons();
+        var toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn && !toggleBtn.hasAttribute('data-theme-initialized')) {
+            toggleBtn.setAttribute('data-theme-initialized', 'true');
+            toggleBtn.addEventListener('click', toggleTheme);
+        }
+    }
+
     // Initialize immediately
     initTheme();
 
     // Setup toggle button after DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            updateIcons();
-            var toggleBtn = document.getElementById('theme-toggle');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', toggleTheme);
-            }
-        });
+        document.addEventListener('DOMContentLoaded', setupToggleButton);
     } else {
-        updateIcons();
-        var toggleBtn = document.getElementById('theme-toggle');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', toggleTheme);
-        }
+        setupToggleButton();
     }
+
+    // HTMX: Réinitialiser après swap de contenu
+    document.addEventListener('htmx:afterSwap', function (event) {
+        // Réappliquer le thème et setup le bouton
+        initTheme();
+        setupToggleButton();
+    });
+
+    // HTMX: Également sur htmx:load pour les éléments chargés dynamiquement
+    document.addEventListener('htmx:load', function (event) {
+        setupToggleButton();
+    });
 })();
+
