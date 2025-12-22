@@ -118,6 +118,6 @@ security:
 # ─────────────────────────────────────────────────────────────────────────────
 frontend:
   htmx:
-    enabled: true                        # Mettre true pour activer HTMX
+    enabled: false                       # Mettre true pour activer HTMX
     progress_bar: true                    # Barre de progression automatique
     script: /assets/js/htmx.min.js
