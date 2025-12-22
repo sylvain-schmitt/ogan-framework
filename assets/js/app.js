@@ -3,10 +3,8 @@
  * 🚀 APP.JS - Point d'entrée JavaScript Ogan Framework
  * ═══════════════════════════════════════════════════════════════════════
  *
- * Ce fichier centralise tout le JavaScript de l'application :
- * - Chargement de HTMX
- * - Initialisation de OganStimulus
- * - Enregistrement des contrôleurs
+ * Ce fichier centralise tout le JavaScript de l'application.
+ * Les imports utilisent l'importmap généré par OganAssetMapper.
  *
  * ═══════════════════════════════════════════════════════════════════════
  */
@@ -17,41 +15,37 @@
 import { Application } from './ogan-stimulus.js';
 
 // ─────────────────────────────────────────────────────────────────────────
-// Import des contrôleurs
+// Import des contrôleurs framework
 // ─────────────────────────────────────────────────────────────────────────
 import FlashController from './controllers/flash_controller.js';
 import ThemeController from './controllers/theme_controller.js';
 import SidebarController from './controllers/sidebar_controller.js';
 
 // ─────────────────────────────────────────────────────────────────────────
-// Chargement de HTMX (non-module, charge en global)
-// ─────────────────────────────────────────────────────────────────────────
-(function loadHtmx() {
-    // Vérifie si HTMX est déjà chargé
-    if (window.htmx) return;
-
-    const script = document.createElement('script');
-    script.src = '/assets/js/htmx.min.js';
-    script.async = true;
-    document.head.appendChild(script);
-})();
-
-// ─────────────────────────────────────────────────────────────────────────
 // Initialisation de l'application
 // ─────────────────────────────────────────────────────────────────────────
 const app = Application.start();
 
-// Enregistrement des contrôleurs
+// Enregistrement des contrôleurs framework
 app.register('flash', FlashController);
 app.register('theme', ThemeController);
 app.register('sidebar', SidebarController);
 
 // ─────────────────────────────────────────────────────────────────────────
-// Compatibilité HTMX
+// Ajoutez vos contrôleurs personnalisés ci-dessous
 // ─────────────────────────────────────────────────────────────────────────
-// Rafraîchir les contrôleurs après un swap HTMX
-document.addEventListener('htmx:afterSwap', () => app.refresh());
-document.addEventListener('htmx:load', () => app.refresh());
+// import MonController from './controllers/mon_controller.js';
+// app.register('mon', MonController);
+
+// ─────────────────────────────────────────────────────────────────────────
+// Compatibilité HTMX - Délai pour laisser le DOM se stabiliser
+// ─────────────────────────────────────────────────────────────────────────
+document.addEventListener('htmx:afterSwap', () => {
+    setTimeout(() => app.refresh(), 50);
+});
+document.addEventListener('htmx:load', () => {
+    setTimeout(() => app.refresh(), 50);
+});
 
 // ─────────────────────────────────────────────────────────────────────────
 // Export pour utilisation avancée
@@ -59,4 +53,3 @@ document.addEventListener('htmx:load', () => app.refresh());
 window.OganApp = app;
 
 console.log('🚀 Ogan Framework initialized');
-

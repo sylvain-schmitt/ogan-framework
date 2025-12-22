@@ -41,12 +41,11 @@ tailwindcss-windows-x64.exe
 tailwindcss
 
 # Assets compilés
-/public/assets/css/app.css
+/public/assets/
 node_modules/
 package-lock.json
 
-# Assets sources et config (à exclure du framework)
-/assets/
+# Configuration (à exclure du framework)
 tailwind.config.js
 
 # Database - Migrations générées localement

@@ -10,29 +10,33 @@
 	</head>
 
 	{# ═══════════════════════════════════════════════════════════════════════════
-			📌 HTMX SUPPORT
-			HTMX est activé par défaut via app.js
-			Pour utiliser le mode boost (SPA-like), ajoutez les attributs ci-dessous à <body>
-			═══════════════════════════════════════════════════════════════════════════ #}
+							📌 HTMX BOOST (optionnel)
+							Pour navigation SPA-like, remplacez <body> par :
+							<body class="..." hx-boost="true" hx-target="#page-content" hx-swap="innerHTML">
+								<div id="page-content">
+							Et décommentez le </div> avant les scripts
+							═══════════════════════════════════════════════════════════════════════════ #}
 
-	{# VERSION AVEC HTMX BOOST (SPA-like navigation) :
-			<body class="min-h-screen flex flex-col bg-gray-50" hx-boost="true" hx-target="#page-content" hx-swap="innerHTML" hx-select="#page-content">
-				<div id="page-content"> #}
+	<body class="min-h-screen flex flex-col bg-gray-50" hx-boost="true" hx-target="#page-content" hx-swap="innerHTML">
+		<div id="page-content">
+			{{ component('navbar') }}
 
-	<body class="min-h-screen flex flex-col bg-gray-50">
+			<main class="flex-1">
+				{{ component('flashes') }}
+				{{ section('body') }}
+			</main>
 
-		{{ component('navbar') }}
+			{{ component('footer') }}
 
-		<main class="flex-1">
-			{{ component('flashes') }}
-			{{ section('body') }}
-		</main>
+		</div>
 
-		{{ component('footer') }}
-
-		{# Décommenter pour HTMX BOOST : </div> #}
-
-		{# Un seul script qui charge tout : HTMX + OganStimulus + Contrôleurs #}<script type="module" src="{{ asset('/assets/js/app.js') }}"> </script>
+		{# ═══════════════════════════════════════════════════════════════════════════
+									📦 SCRIPTS
+									- htmx_script() : HTMX + Progress Bar automatique
+									- app.js : OganStimulus + Contrôleurs (module ES)
+									═══════════════════════════════════════════════════════════════════════════ #}
+		{{ htmx_script() }}
+		<script type="module" src="{{ asset('/assets/js/app.js') }}"></script>
 	</body>
 
 </html>

@@ -337,3 +337,77 @@ class ArticleController extends AbstractController
 - **WebP** : Conversion automatique pour une meilleure compression (~30% plus léger que JPEG)
 - **Ratio** : Le ratio d'aspect est toujours préservé lors du redimensionnement
 - **Crop** : L'option `crop` centre et recadre l'image pour obtenir les dimensions exactes
+
+---
+
+## Upload et HTMX
+
+L'upload de fichiers fonctionne parfaitement avec **HTMX**, offrant une expérience utilisateur fluide sans rechargement complet de page.
+
+### Configuration du Formulaire
+
+Pour que l'upload fonctionne avec HTMX, vous devez :
+1. Ajouter `hx-encoding="multipart/form-data"` (obligatoire).
+2. Ajouter `hx-post` vers votre route.
+3. Définir une cible `hx-target` pour afficher le résultat.
+
+```html
+<form method="POST" enctype="multipart/form-data" 
+      hx-post="{{ path('upload_route') }}"
+      hx-encoding="multipart/form-data"
+      hx-target="#upload-result">
+      
+    <input type="file" name="image">
+    <button type="submit">Uploader</button>
+</form>
+
+<div id="upload-result">
+    <!-- Le résultat s'affichera ici -->
+</div>
+```
+
+### Performance : Utilisation de Partial
+
+Pour optimiser les performances et la fluidité (ne pas recharger toute la page), il est recommandé de retourner uniquement un **Partial HTML** si la requête est faite via HTMX.
+
+**Contrôleur :**
+
+```php
+// Si requête HTMX, on renvoie seulement le partial du résultat
+if ($this->request->getHeader('HX-Request')) {
+    return $this->render('partials/_upload_result.ogan', [
+        'result' => $result
+    ]);
+}
+
+// Sinon, rendu de la page complète (fallback)
+return $this->render('upload/index.ogan', [
+    'result' => $result
+]);
+```
+
+**Template Partial (`partials/_upload_result.ogan`) :**
+
+Ce template contient uniquement le HTML à injecter dans `#upload-result`.
+
+```html
+{% if result %}
+    <div class="success">Image uploadée : {{ result.getWebPath() }}</div>
+{% endif %}
+
+<!-- Mise à jour des Flash Messages via OOB (Out Of Band) -->
+{{ component('flashes', ['oob' => true]) }}
+```
+
+### Mise à jour des Flash Messages (OOB)
+
+Lorsque vous utilisez un partial HTMX, le reste de la page (comme le conteneur des messages flash) n'est pas mis à jour automatiquement. 
+
+Pour forcer la mise à jour des flash messages, utilisez l'option `oob` du composant `flashes` dans votre partial de réponse :
+
+```html
+<!-- Dans votre partial de réponse (ex: _result.ogan) -->
+{{ component('flashes', ['oob' => true]) }}
+```
+
+Cela génèrera un bloc HTML avec l'attribut `hx-swap-oob="true"`, indiquant à HTMX de mettre à jour le conteneur des flash messages existant dans la page principale, en plus du contenu cible.

@@ -219,6 +219,33 @@ Utilisez l'extension navigateur **HTMX Debugger** ou inspectez l'onglet Réseau 
 
 ---
 
+---
+
+## 🔄 Mises à jour Multiples (Out of Band Swaps)
+
+Parfois, une action (ex: soumission de formulaire) doit mettre à jour plusieurs parties de la page qui ne sont pas adjacentes (ex: le résultat du formulaire + les messages flash en haut de page).
+
+HTMX permet cela avec l'attribut `hx-swap-oob`.
+
+### Exemple : Messages Flash
+
+Dans votre partial de réponse (`_result.ogan`), incluez le contenu principal + le bloc flash avec `hx-swap-oob="true"` :
+
+```html
+<!-- Contenu principal (injecté dans la cible hx-target) -->
+<div class="result">
+    Opération réussie !
+</div>
+
+<!-- Contenu secondaire (injecté dans l'élément id="flashes-container") -->
+{{ component('flashes', ['oob' => true]) }}
+```
+
+Le composant `flashes` d'Ogan gère automatiquement l'attribut `hx-swap-oob="true"` lorsqu'on lui passe `oob: true`.
+Notez que la page doit contenir un élément `<div id="flashes-container">` pour que cela fonctionne.
+
+---
+
 ## 📚 Ressources
 
 - [Documentation Officielle HTMX](https://htmx.org/docs/)

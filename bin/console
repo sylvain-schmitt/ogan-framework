@@ -72,5 +72,9 @@ registerApiCommands($app);
 require $commandsDir . '/seeder.php';
 registerSeederCommands($app);
 
+// Assets (OganAssetMapper)
+require $commandsDir . '/assets.php';
+registerAssetsCommands($app);
+
 // Exécuter l'application
 $app->run($argv);

@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Configuration dark mode pour le toggle manuel */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Personnalisations CSS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* HTMX Progress Bar : les styles sont inclus via {{ htmx_script() }} */
