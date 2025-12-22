@@ -17,8 +17,7 @@
 							Et décommentez le </div> avant les scripts
 							═══════════════════════════════════════════════════════════════════════════ #}
 
-	<body class="min-h-screen flex flex-col bg-gray-50" hx-boost="true" hx-target="#page-content" hx-swap="innerHTML">
-		<div id="page-content">
+	<body class="min-h-screen flex flex-col bg-gray-50">
 			{{ component('navbar') }}
 
 			<main class="flex-1">
@@ -28,7 +27,7 @@
 
 			{{ component('footer') }}
 
-		</div>
+		{# </div> #}
 
 		{# ═══════════════════════════════════════════════════════════════════════════
 									📦 SCRIPTS
