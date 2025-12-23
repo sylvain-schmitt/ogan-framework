@@ -110,9 +110,19 @@ Cela génère :
 
 ## Rendre les champs individuellement
 
-Pour un contrôle total sur le layout, vous pouvez rendre chaque champ séparément.
+Pour un contrôle total sur le layout, vous pouvez rendre chaque champ séparément ou même ses composants individuels.
 
-### Syntaxe de base
+### Syntaxe disponible
+
+| Syntaxe | Description |
+|---------|-------------|
+| `{{ form.email }}` | Champ complet (label + input + erreurs) |
+| `{{ form.email.label }}` | Juste le label |
+| `{{ form.email.widget }}` | Juste l'input |
+| `{{ form.email.errors }}` | Juste les erreurs |
+| `{{ form.email.row }}` | Alias du champ complet |
+
+### Exemple basique
 
 ```html
 <form method="POST" action="{{ path('user_store') }}">
@@ -125,50 +135,59 @@ Pour un contrôle total sur le layout, vous pouvez rendre chaque champ séparém
         {{ form.email }}
     </div>
     
-    <div class="mb-4">
-        {{ form.password }}
-    </div>
-    
     {{ form.submit }}
     
 </form>
 ```
 
-Chaque `{{ form.fieldName }}` génère :
-- Le label du champ
-- L'input HTML correspondant
-- Les erreurs de validation (si présentes)
+### Exemple avec contrôle total
 
-### Exemple avec layout personnalisé
+Quand vous avez besoin d'un layout très personnalisé :
 
 ```html
 <form method="POST" action="{{ path('register') }}" class="max-w-md mx-auto">
     
     <h2 class="text-2xl font-bold mb-6">Inscription</h2>
     
-    <!-- Deux champs côte à côte -->
+    <!-- Layout personnalisé avec label externe -->
+    <div class="mb-4">
+        {{ form.email.label }}
+        <div class="flex items-center">
+            <span class="text-gray-500 mr-2">@</span>
+            {{ form.email.widget }}
+        </div>
+        {{ form.email.errors }}
+    </div>
+    
+    <!-- Deux champs côte à côte, widgets seulement -->
     <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>{{ form.firstName }}</div>
-        <div>{{ form.lastName }}</div>
+        <div>
+            {{ form.firstName.label }}
+            {{ form.firstName.widget }}
+        </div>
+        <div>
+            {{ form.lastName.label }}
+            {{ form.lastName.widget }}
+        </div>
     </div>
     
-    <!-- Champ email pleine largeur -->
-    <div class="mb-4">
-        {{ form.email }}
+    <!-- Erreurs groupées en bas -->
+    <div class="text-red-600 mb-4">
+        {{ form.firstName.errors }}
+        {{ form.lastName.errors }}
     </div>
     
-    <!-- Mot de passe avec aide -->
+    <!-- Mot de passe avec aide contextuelle -->
     <div class="mb-4">
-        {{ form.password }}
+        {{ form.password.label }}
+        {{ form.password.widget }}
         <p class="text-sm text-gray-500 mt-1">
-            Minimum 8 caractères
+            Minimum 8 caractères, incluant une majuscule
         </p>
+        {{ form.password.errors }}
     </div>
     
-    <!-- Bouton submit stylisé -->
-    <div class="mt-6">
-        {{ form.submit }}
-    </div>
+    {{ form.submit }}
     
 </form>
 ```
