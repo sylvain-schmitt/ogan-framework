@@ -56,3 +56,7 @@ tailwind.config.js
 /var/db/
 *.db
 *.sqlite
+
+# SEO generated files
+public/sitemap.xml
+public/robots.txt
