@@ -28,52 +28,52 @@ La configuration suit cette hiérarchie (du plus prioritaire au moins prioritair
 - ✅ **Sécurisé** : Déjà dans `.gitignore`, ne sera pas commité
 - ✅ **Simple** : Format clé=valeur
 
-### Format
+### Format DATABASE_URL (Recommandé) ⭐
 
-Créez un fichier `.env` à la racine du projet :
+Utilisez le format Symfony/Laravel pour une configuration simple sur une ligne :
 
 ```env
-# Configuration d'environnement
-APP_ENV=dev
-APP_DEBUG=true
+# MySQL
+DATABASE_URL="mysql://user:password@127.0.0.1:3306/database?charset=utf8mb4"
 
-# Base de données
-# Driver supportés : mysql, pgsql, sqlite, sqlsrv
-DB_DRIVER=mysql
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=myapp
-DB_USER=root
-DB_PASS=secret
-DB_CHARSET=utf8mb4
+# PostgreSQL
+DATABASE_URL="postgresql://user:password@127.0.0.1:5432/database"
 
-# Router
-ROUTER_BASE_PATH=
+# SQLite
+DATABASE_URL="sqlite:///var/db/app.db"
 ```
 
-### Variables Disponibles
+**Structure de l'URL :**
+```
+driver://user:password@host:port/database?options
+```
+
+| Composant | Description | Exemple |
+|-----------|-------------|---------|
+| `driver` | Type de base | `mysql`, `postgresql`, `pgsql`, `sqlite` |
+| `user` | Utilisateur | `root`, `admin` |
+| `password` | Mot de passe | `secret123` |
+| `host` | Serveur | `127.0.0.1`, `db.example.com` |
+| `port` | Port | `3306` (MySQL), `5432` (PostgreSQL) |
+| `database` | Nom de la base | `myapp` |
+| `charset` | Encodage (option) | `utf8mb4` |
+
+**Exemple complet `.env` :**
+
+```env
+APP_ENV=dev
+APP_DEBUG=true
+DATABASE_URL="mysql://ogan:ogan@127.0.0.1:3306/ogan_framework?charset=utf8mb4"
+```
+
+### Autres Variables Disponibles
 
 | Variable .env | Accès dans le code | Description |
 |--------------|-------------------|-------------|
 | `APP_ENV` | `Config::get('app.env')` | Environnement (dev, prod) |
 | `APP_DEBUG` | `Config::get('app.debug')` | Mode debug (true, false) |
-| `DB_DRIVER` | `Config::get('database.driver')` | Type de base (mysql, pgsql, sqlite, sqlsrv) |
-| `DB_HOST` | `Config::get('database.host')` | Hôte de la base de données |
-| `DB_PORT` | `Config::get('database.port')` | Port de la base de données |
-| `DB_NAME` | `Config::get('database.name')` | Nom de la base de données |
-| `DB_USER` | `Config::get('database.user')` | Utilisateur de la base |
-| `DB_PASS` | `Config::get('database.password')` | Mot de passe |
-| `DB_CHARSET` | `Config::get('database.charset')` | Charset (MySQL uniquement) |
+| `DATABASE_URL` | Auto-parsé vers `database.*` | URL de connexion complète |
 | `ROUTER_BASE_PATH` | `Config::get('router.base_path')` | Préfixe des routes |
-
-### Convention de Nommage
-
-Les variables d'environnement sont automatiquement converties :
-
-- `APP_*` → `app.*`
-- `DB_*` → `database.*`
-- `ROUTER_*` → `router.*`
-- Les underscores `_` deviennent des points `.`
 
 ---
 
