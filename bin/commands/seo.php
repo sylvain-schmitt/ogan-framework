@@ -131,19 +131,56 @@ function registerSeoCommands($app)
     // ═══════════════════════════════════════════════════════════════
     // seo:all - Générer tous les fichiers SEO
     // ═══════════════════════════════════════════════════════════════
-    $app->addCommand('seo:all', function ($args) use ($app) {
+    $app->addCommand('seo:all', function ($args) {
+        $projectRoot = dirname(__DIR__, 2);
+
         echo "\n═══════════════════════════════════════════════════════════\n";
         echo "               GÉNÉRATION DES FICHIERS SEO\n";
         echo "═══════════════════════════════════════════════════════════\n";
 
-        // Exécuter les deux commandes
-        $sitemapResult = $app->runCommand('seo:sitemap', $args);
-        $robotsResult = $app->runCommand('seo:robots', $args);
+        // Récupérer l'URL de base
+        $baseUrl = $args['base-url'] ?? getBaseUrl();
+        $outputDir = $args['output'] ?? $projectRoot . '/public';
 
-        if ($sitemapResult === 0 && $robotsResult === 0) {
-            echo "═══════════════════════════════════════════════════════════\n";
+        // Charger le router
+        require_once $projectRoot . '/vendor/autoload.php';
+        $configPath = $projectRoot . '/config/parameters.php';
+        if (file_exists($configPath) && !Config::has('app.env')) {
+            Config::init($configPath);
+        }
+
+        $router = new \Ogan\Router\Router();
+        $controllersPath = $projectRoot . '/src/Controller';
+        if (is_dir($controllersPath)) {
+            $router->loadRoutesFromControllers($controllersPath);
+        }
+
+        // Générer sitemap.xml
+        echo "\n🗺️  Génération du sitemap.xml...\n";
+        $sitemap = new SitemapGenerator($baseUrl);
+        $sitemap->addRoutesFromRouter($router, 0.5);
+        $sitemapPath = rtrim($outputDir, '/') . '/sitemap.xml';
+        $sitemapResult = $sitemap->save($sitemapPath);
+        if ($sitemapResult) {
+            echo "  ✓ Fichier généré : {$sitemapPath}\n";
+            echo "  ✓ URLs incluses  : " . count($sitemap->getUrls()) . "\n";
+        }
+
+        // Générer robots.txt
+        echo "\n🤖 Génération du robots.txt...\n";
+        $robots = new RobotsGenerator($baseUrl, true);
+        $robots->sitemap('/sitemap.xml');
+        $robotsPath = rtrim($outputDir, '/') . '/robots.txt';
+        $robotsResult = $robots->save($robotsPath);
+        if ($robotsResult) {
+            echo "  ✓ Fichier généré : {$robotsPath}\n";
+        }
+
+        if ($sitemapResult && $robotsResult) {
+            echo "\n═══════════════════════════════════════════════════════════\n";
             echo "✅ Tous les fichiers SEO ont été générés avec succès !\n";
-            echo "═══════════════════════════════════════════════════════════\n\n";
+            echo "═══════════════════════════════════════════════════════════\n";
+            echo "📋 Soumettez le sitemap à Google Search Console : {$baseUrl}/sitemap.xml\n\n";
             return 0;
         }
 
