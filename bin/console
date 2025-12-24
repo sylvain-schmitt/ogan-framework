@@ -80,5 +80,9 @@ registerAssetsCommands($app);
 require $commandsDir . '/seo.php';
 registerSeoCommands($app);
 
+// Skeleton (synchronisation avec le skeleton de référence)
+require $commandsDir . '/skeleton.php';
+registerSkeletonCommands($app);
+
 // Exécuter l'application
 $app->run($argv);
