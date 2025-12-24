@@ -76,5 +76,9 @@ registerSeederCommands($app);
 require $commandsDir . '/assets.php';
 registerAssetsCommands($app);
 
+// SEO (sitemap.xml, robots.txt)
+require $commandsDir . '/seo.php';
+registerSeoCommands($app);
+
 // Exécuter l'application
 $app->run($argv);
