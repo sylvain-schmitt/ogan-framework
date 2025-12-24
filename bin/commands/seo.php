@@ -23,6 +23,26 @@ use Ogan\Seo\SitemapGenerator;
 use Ogan\Seo\RobotsGenerator;
 use Ogan\Config\Config;
 
+/**
+ * Parse les arguments CLI du format ['--key=value'] vers ['key' => 'value']
+ */
+function parseCliArgs(array $args): array
+{
+    $parsed = [];
+    foreach ($args as $arg) {
+        if (str_starts_with($arg, '--')) {
+            $arg = substr($arg, 2); // Enlever --
+            if (str_contains($arg, '=')) {
+                [$key, $value] = explode('=', $arg, 2);
+                $parsed[$key] = $value;
+            } else {
+                $parsed[$arg] = true;
+            }
+        }
+    }
+    return $parsed;
+}
+
 function registerSeoCommands($app)
 {
 
@@ -30,6 +50,7 @@ function registerSeoCommands($app)
     // seo:sitemap - Générer sitemap.xml
     // ═══════════════════════════════════════════════════════════════
     $app->addCommand('seo:sitemap', function ($args) {
+        $args = parseCliArgs($args); // Parser les arguments
         $projectRoot = dirname(__DIR__, 2);
 
         // Récupérer l'URL de base
@@ -88,6 +109,7 @@ function registerSeoCommands($app)
     // seo:robots - Générer robots.txt
     // ═══════════════════════════════════════════════════════════════
     $app->addCommand('seo:robots', function ($args) {
+        $args = parseCliArgs($args); // Parser les arguments
         $projectRoot = dirname(__DIR__, 2);
 
         // Récupérer l'URL de base
@@ -132,6 +154,7 @@ function registerSeoCommands($app)
     // seo:all - Générer tous les fichiers SEO
     // ═══════════════════════════════════════════════════════════════
     $app->addCommand('seo:all', function ($args) {
+        $args = parseCliArgs($args); // Parser les arguments
         $projectRoot = dirname(__DIR__, 2);
 
         echo "\n═══════════════════════════════════════════════════════════\n";
