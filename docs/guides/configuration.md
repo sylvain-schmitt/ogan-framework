@@ -2,38 +2,82 @@
 
 > Guide complet sur la configuration du framework
 
-## 📊 Hiérarchie de Priorité
+## 🚀 Configuration Minimale (Recommandée)
 
-La configuration suit cette hiérarchie (du plus prioritaire au moins prioritaire) :
+En production, vous n'avez besoin que de **4 variables** :
 
-1. **Variables d'environnement (`.env`)** → **PRIORITÉ MAXIMALE** ⭐
-2. Fichier PHP (`config/parameters.php`)
-3. Valeurs par défaut dans le code
-
-**Exemple :**
-```php
-// Si .env contient : DB_HOST=production.db
-// Et parameters.php contient : 'database' => ['host' => 'localhost']
-// Alors Config::get('database.host') retournera 'production.db' (depuis .env)
+```env
+APP_ENV=prod
+APP_SECRET=votre-cle-secrete-64-caracteres-minimum
+DATABASE_URL="mysql://user:pass@host:3306/database?charset=utf8mb4"
+MAILER_DSN=smtp://user:pass@smtp.example.com:587
 ```
+
+**Tout le reste est auto-configuré** selon `APP_ENV` ! ✨
 
 ---
 
-## 🔧 Configuration via `.env` (Recommandé)
+## 🔄 Auto-configuration selon APP_ENV
 
-### Avantages
+Le framework configure automatiquement les paramètres selon l'environnement :
 
-- ✅ **Séparé du code** : Pas besoin de modifier `parameters.php`
-- ✅ **Par environnement** : Un `.env` différent pour dev/prod
-- ✅ **Sécurisé** : Déjà dans `.gitignore`, ne sera pas commité
-- ✅ **Simple** : Format clé=valeur
+| Variable | `dev` (défaut) | `prod` | `test` |
+|----------|----------------|--------|--------|
+| `APP_DEBUG` | `true` | `false` | `true` |
+| `SESSION_SECURE` | `false` | `true` | `false` |
+| `SESSION_LIFETIME` | 7200 (2h) | 3600 (1h) | 7200 |
+| `SESSION_SAMESITE` | `Lax` | `Strict` | `Lax` |
+| `LOG_LEVEL` | `debug` | `error` | `warning` |
+| `MAILER_DSN` | MailHog (1025) | - | - |
 
-### Format DATABASE_URL (Recommandé) ⭐
+> **💡 Surcharge possible** : Ajoutez la variable dans `.env` pour remplacer le défaut automatique.
 
-Utilisez le format Symfony/Laravel pour une configuration simple sur une ligne :
+---
+
+## 📋 Variables Disponibles
+
+### Essentielles (4)
+
+| Variable | Requis | Description |
+|----------|--------|-------------|
+| `APP_ENV` | ✅ | `dev`, `prod` ou `test` |
+| `APP_SECRET` | ✅ prod | Clé secrète (CSRF, tokens) |
+| `DATABASE_URL` | ✅ | URL de connexion BDD |
+| `MAILER_DSN` | ⚡ | DSN du mailer (auto en dev) |
+
+### Optionnelles
+
+| Variable | Auto-configurée | Description |
+|----------|-----------------|-------------|
+| `APP_DEBUG` | ✅ | Afficher les erreurs |
+| `SESSION_*` | ✅ | Configuration session |
+| `LOG_LEVEL` | ✅ | Niveau de log |
+| `ROUTER_BASE_PATH` | - | Préfixe des routes |
+
+---
+
+## 🔐 APP_SECRET
+
+Clé obligatoire en production. Utilisée pour :
+- Tokens CSRF
+- Signature de cookies
+- Autres sécurités cryptographiques
+
+**Générer une clé :**
+```bash
+php -r "echo bin2hex(random_bytes(32));"
+```
+
+> **⚠️ En production**, le framework refuse de démarrer si `APP_SECRET` n'est pas défini ou vaut `changeme-in-production`.
+
+---
+
+## 🗄️ DATABASE_URL
+
+Format unifié style Symfony :
 
 ```env
-# MySQL
+# MySQL/MariaDB
 DATABASE_URL="mysql://user:password@127.0.0.1:3306/database?charset=utf8mb4"
 
 # PostgreSQL
@@ -43,296 +87,76 @@ DATABASE_URL="postgresql://user:password@127.0.0.1:5432/database"
 DATABASE_URL="sqlite:///var/db/app.db"
 ```
 
-**Structure de l'URL :**
+**Structure :**
 ```
 driver://user:password@host:port/database?options
 ```
 
-| Composant | Description | Exemple |
-|-----------|-------------|---------|
-| `driver` | Type de base | `mysql`, `postgresql`, `pgsql`, `sqlite` |
-| `user` | Utilisateur | `root`, `admin` |
-| `password` | Mot de passe | `secret123` |
-| `host` | Serveur | `127.0.0.1`, `db.example.com` |
-| `port` | Port | `3306` (MySQL), `5432` (PostgreSQL) |
-| `database` | Nom de la base | `myapp` |
-| `charset` | Encodage (option) | `utf8mb4` |
+---
 
-**Exemple complet `.env` :**
+## 📧 MAILER_DSN
+
+Format style Symfony Mailer :
 
 ```env
-APP_ENV=dev
-APP_DEBUG=true
-DATABASE_URL="mysql://ogan:ogan@127.0.0.1:3306/ogan_framework?charset=utf8mb4"
+# Production (SMTP)
+MAILER_DSN=smtp://user:pass@smtp.example.com:587
+
+# Gmail
+MAILER_DSN=smtp://user:pass@smtp.gmail.com:587
+
+# Mailgun
+MAILER_DSN=smtp://postmaster@domain:key@smtp.mailgun.org:587
 ```
 
-### Autres Variables Disponibles
-
-| Variable .env | Accès dans le code | Description |
-|--------------|-------------------|-------------|
-| `APP_ENV` | `Config::get('app.env')` | Environnement (dev, prod) |
-| `APP_DEBUG` | `Config::get('app.debug')` | Mode debug (true, false) |
-| `DATABASE_URL` | Auto-parsé vers `database.*` | URL de connexion complète |
-| `ROUTER_BASE_PATH` | `Config::get('router.base_path')` | Préfixe des routes |
+> **En dev** : Si non défini, utilise automatiquement `smtp://127.0.0.1:1025` (MailHog).
 
 ---
 
-## 📝 Configuration via `config/parameters.php`
-
-### Quand l'utiliser ?
-
-- ✅ Valeurs par défaut pour tous les environnements
-- ✅ Configuration complexe (tableaux, objets)
-- ✅ Configuration qui doit être versionnée
-
-### Format
-
-```php
-<?php
-
-return [
-    // Application
-    'app' => [
-        'env' => 'dev',
-        'debug' => true,
-    ],
-
-    // Base de données
-    'database' => [
-        'driver' => 'mysql',
-        'host' => 'localhost',
-        'port' => 3306,
-        'name' => 'myapp',
-        'user' => 'root',
-        'password' => '',
-        'charset' => 'utf8mb4',
-    ],
-
-    // Router
-    'router' => [
-        'base_path' => '',
-    ],
-
-    // Vues
-    'view' => [
-        'templates_path' => __DIR__ . '/../templates',
-        'default_layout' => 'layouts/base.html.php',
-        'default_title' => 'Mon site',
-    ],
-];
-```
-
----
-
-## 🎯 Exemples de Configuration
+## 🎯 Exemples Complets
 
 ### Développement (`.env`)
 
 ```env
 APP_ENV=dev
-APP_DEBUG=true
-
-DB_DRIVER=sqlite
-DB_NAME=dev.db
+APP_SECRET=dev-secret-not-important
+DATABASE_URL="mysql://root:root@127.0.0.1:3306/myapp?charset=utf8mb4"
+# MAILER_DSN auto → MailHog
 ```
-
-**Note :** Pour SQLite, seul `DB_NAME` est nécessaire.
 
 ### Production (`.env`)
 
 ```env
 APP_ENV=prod
-APP_DEBUG=false
-
-DB_DRIVER=mysql
-DB_HOST=production.db.example.com
-DB_PORT=3306
-DB_NAME=myapp_prod
-DB_USER=prod_user
-DB_PASS=super_secret_password
-DB_CHARSET=utf8mb4
+APP_SECRET=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef12345678
+DATABASE_URL="mysql://prod_user:S3cur3P@ss@db.example.com:3306/myapp_prod?charset=utf8mb4"
+MAILER_DSN=smtp://noreply:secret@smtp.example.com:587
 ```
 
-### Test (`.env`)
+### Surcharger un défaut
 
 ```env
-APP_ENV=test
-APP_DEBUG=true
-
-DB_DRIVER=sqlite
-DB_NAME=test.db
-```
-
----
-
-## 🔄 Changer de Base de Données
-
-### Exemple : Passer de MySQL à PostgreSQL
-
-**Avant (`.env`) :**
-```env
-DB_DRIVER=mysql
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=myapp
-DB_USER=root
-DB_PASS=secret
-DB_CHARSET=utf8mb4
-```
-
-**Après (`.env`) :**
-```env
-DB_DRIVER=pgsql
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=myapp
-DB_USER=postgres
-DB_PASS=secret
-# DB_CHARSET n'est pas nécessaire pour PostgreSQL
-```
-
-**C'est tout !** Le framework détecte automatiquement le changement.
-
----
-
-## ✅ Configuration Minimale
-
-### Pour MySQL/MariaDB
-
-**Minimum requis dans `.env` :**
-```env
-DB_DRIVER=mysql
-DB_NAME=myapp
-```
-
-Les autres valeurs utilisent les défauts :
-- `DB_HOST` → `localhost`
-- `DB_PORT` → `3306`
-- `DB_USER` → `root`
-- `DB_PASS` → `''`
-- `DB_CHARSET` → `utf8mb4`
-
-### Pour SQLite
-
-**Minimum requis dans `.env` :**
-```env
-DB_DRIVER=sqlite
-DB_NAME=myapp.db
-```
-
-Le fichier sera créé automatiquement dans `var/db/myapp.db`.
-
----
-
-## 🔍 Vérifier la Configuration
-
-### Dans le Code
-
-```php
-use Ogan\Config\Config;
-
-// Vérifier le driver
-$driver = Config::get('database.driver', 'mysql');
-echo "Driver : {$driver}";
-
-// Vérifier la configuration complète
-$dbConfig = Config::get('database');
-var_dump($dbConfig);
-```
-
-### Test de Connexion
-
-```php
-use Ogan\Database\Database;
-
-try {
-    $pdo = Database::getConnection();
-    echo "✅ Connexion réussie !";
-    echo "Driver : " . $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
-} catch (\Exception $e) {
-    echo "❌ Erreur : " . $e->getMessage();
-}
-```
-
----
-
-## ⚠️ Sécurité
-
-### Ne JAMAIS commiter `.env`
-
-Le fichier `.env` est déjà dans `.gitignore` :
-
-```gitignore
-.env
-.env.local
-.env.*.local
-```
-
-### Créer un `.env.example`
-
-Créez un fichier `.env.example` avec des valeurs d'exemple (sans secrets) :
-
-```env
-# .env.example
 APP_ENV=dev
-APP_DEBUG=true
-
-DB_DRIVER=mysql
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=myapp
-DB_USER=root
-DB_PASS=
-DB_CHARSET=utf8mb4
-```
-
-Les développeurs peuvent copier ce fichier :
-```bash
-cp .env.example .env
+APP_DEBUG=false  # Surcharge : désactive debug même en dev
 ```
 
 ---
 
-## 📚 Résumé
+## 📊 Hiérarchie de Priorité
 
-### Configuration Recommandée
-
-**Pour la plupart des cas :** Utilisez uniquement `.env` ✅
-
-```env
-# .env - Configuration complète
-APP_ENV=dev
-APP_DEBUG=true
-DB_DRIVER=mysql
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=myapp
-DB_USER=root
-DB_PASS=secret
-```
-
-**Pour les valeurs par défaut communes :** Utilisez `parameters.php` comme fallback
-
-```php
-// config/parameters.php - Valeurs par défaut
-return [
-    'view' => [
-        'templates_path' => __DIR__ . '/../templates',
-        'default_layout' => 'layouts/base.html.php',
-    ],
-];
-```
-
-### Avantages de `.env` uniquement
-
-- ✅ **Simple** : Un seul fichier à modifier
-- ✅ **Sécurisé** : Pas commité dans Git
-- ✅ **Flexible** : Différent par environnement
-- ✅ **Standard** : Convention utilisée par Laravel, Symfony, etc.
+1. **Variables d'environnement** (`.env.local`) → Priorité maximale
+2. **Variables d'environnement** (`.env`)
+3. **Auto-configuration** selon `APP_ENV`
+4. **Valeurs par défaut** dans le code
 
 ---
 
-**Conclusion : Oui, vous pouvez configurer uniquement via `.env` !** ✅
+## ✅ Résumé
 
-Le fichier `parameters.php` sert de fallback pour les valeurs par défaut, mais n'est pas obligatoire si tout est dans `.env`.
+| Environnement | Variables minimales |
+|---------------|---------------------|
+| **Dev** | `APP_ENV` + `DATABASE_URL` |
+| **Prod** | `APP_ENV` + `APP_SECRET` + `DATABASE_URL` + `MAILER_DSN` |
+| **Test** | `APP_ENV` + `DATABASE_URL` |
 
+**Tout le reste est automatique !** 🎉
