@@ -84,5 +84,9 @@ registerSeoCommands($app);
 require $commandsDir . '/skeleton.php';
 registerSkeletonCommands($app);
 
+// Server (serveur de développement)
+require $commandsDir . '/server.php';
+registerServerCommands($app);
+
 // Exécuter l'application
 $app->run($argv);
