@@ -67,8 +67,14 @@ auth:
   send_password_reset_email: false
 
   # Redirections
-  login_redirect: /dashboard
+  login_redirect: /              # Défaut pour les utilisateurs
   logout_redirect: /login
+
+  # Redirection par rôle (optionnel)
+  # Les rôles sont vérifiés dans l'ordre, le premier qui match est utilisé
+  role_redirects:
+    ROLE_ADMIN: /dashboard       # Les admins vont au dashboard
+    # ROLE_AUTHOR: /my-articles  # Exemple: les auteurs vers leurs articles
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 📧 EMAIL
