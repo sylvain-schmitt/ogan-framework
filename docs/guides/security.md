@@ -1,152 +1,155 @@
-# 🔐 Sécurité & Autorisation - Guide
+# 🔐 Sécurité & Contrôle d'Accès
 
-Le framework Ogan inclut un système RBAC (Role-Based Access Control) complet.
+> Protéger vos routes avec des rôles et permissions
 
-## 🎯 Concepts clés
+## Table des matières
 
-| Composant | Description |
-|-----------|-------------|
-| **Rôle** | Permission globale (ex: `ROLE_ADMIN`) |
-| **Voter** | Classe qui décide l'accès à une ressource |
-| **IsGranted** | Attribut pour protéger une route |
+- [Configuration des rôles](#configuration-des-rôles)
+- [Attribut IsGranted](#attribut-isgranted)
+- [Méthodes de contrôle](#méthodes-de-contrôle)
+- [Redirection après login](#redirection-après-login)
+- [Désactiver des routes](#désactiver-des-routes)
 
 ---
 
-## 🔑 Vérification des rôles
+## Configuration des rôles
 
-### Dans un contrôleur
+Les rôles sont stockés dans le champ `roles` du User (JSON).
 
 ```php
-class AdminController extends AbstractController
-{
-    public function dashboard()
-    {
-        // Méthode 1: Vérification simple
-        if (!$this->isGranted('ROLE_ADMIN')) {
-            return $this->accessDenied('Réservé aux administrateurs');
-        }
-
-        // Méthode 2: Exception automatique
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
-        // Récupérer l'utilisateur connecté
-        $user = $this->getUser();
-
-        return $this->render('admin/dashboard.ogan', ['user' => $user]);
-    }
-}
+// Modèle User
+$user->setRoles(['ROLE_ADMIN', 'ROLE_USER']);
+$user->hasRole('ROLE_ADMIN'); // true
 ```
 
-### Avec l'attribut #[IsGranted]
+### Création d'un admin
+
+```bash
+php bin/console make:admin
+```
+
+---
+
+## Attribut IsGranted
+
+### Sur une classe (toutes les routes)
 
 ```php
 use Ogan\Security\Attribute\IsGranted;
 
-#[IsGranted('ROLE_ADMIN')]
-class AdminController extends AbstractController
+#[IsGranted('ROLE_ADMIN', message: 'Accès réservé aux admins.')]
+class DashboardController extends AbstractController
 {
-    // Toutes les méthodes nécessitent ROLE_ADMIN
+    // Toutes les routes nécessitent ROLE_ADMIN
+}
+```
+
+### Sur une méthode (une seule route)
+
+```php
+#[Route('/articles/new', methods: ['GET', 'POST'])]
+#[IsGranted('ROLE_AUTHOR', message: 'Vous devez être auteur.')]
+public function newArticle(): Response
+{
+    // ...
+}
+```
+
+### Comportement
+
+| Situation | Résultat |
+|-----------|----------|
+| Non connecté | Redirige vers `/login` |
+| Connecté sans le rôle | Affiche page 403 |
+| Connecté avec le rôle | Accès autorisé ✅ |
+
+---
+
+## Méthodes de contrôle
+
+### Dans un contrôleur
+
+```php
+// Vérifier un rôle
+if ($this->isGranted('ROLE_ADMIN')) {
+    // ...
 }
 
-class PostController extends AbstractController
-{
-    #[IsGranted('ROLE_USER')]
-    public function create() { /* ... */ }
+// Bloquer si pas le rôle (lance AccessDeniedException)
+$this->denyAccessUnlessGranted('ROLE_ADMIN', null, 'Accès admin requis.');
 
-    #[IsGranted('edit', subject: 'post')]
-    public function edit(Post $post) { /* ... */ }
-}
+// Retourner une réponse 403 directement
+return $this->accessDenied('Accès refusé.');
 ```
 
 ---
 
-## 📊 Hiérarchie des rôles
+## Redirection après login
 
-Configurez dans `config/parameters.yaml` :
+### Configuration dans `parameters.yaml`
 
 ```yaml
-security:
-  role_hierarchy:
-    ROLE_ADMIN: [ROLE_USER]
-    ROLE_SUPER_ADMIN: [ROLE_ADMIN]
+auth:
+  login_redirect: /              # Défaut pour les utilisateurs
+  logout_redirect: /login
+
+  # Redirection par rôle (optionnel)
+  role_redirects:
+    ROLE_ADMIN: /dashboard       # Admins → dashboard
+    ROLE_AUTHOR: /my-articles    # Auteurs → leurs articles
 ```
 
-Un utilisateur avec `ROLE_ADMIN` aura automatiquement `ROLE_USER`.
+### Comment ça fonctionne
+
+1. Après login, le système vérifie les rôles de l'utilisateur
+2. Le premier rôle qui match dans `role_redirects` définit l'URL
+3. Si aucun rôle ne match, `login_redirect` est utilisé
 
 ---
 
-## 🗳️ Créer un Voter personnalisé
+## Désactiver des routes
 
-```php
-<?php
+### Via `.env`
 
-namespace App\Security\Voter;
-
-use Ogan\Security\Authorization\AbstractVoter;
-use Ogan\Security\UserInterface;
-use App\Model\Post;
-
-class PostVoter extends AbstractVoter
-{
-    public function supports(string $attribute, mixed $subject): bool
-    {
-        return in_array($attribute, ['edit', 'delete']) 
-            && $subject instanceof Post;
-    }
-
-    protected function voteOnAttribute(string $attribute, mixed $subject, UserInterface $user): bool
-    {
-        /** @var Post $post */
-        $post = $subject;
-
-        return match ($attribute) {
-            'edit' => $post->getAuthorId() === $user->getId(),
-            'delete' => $user->hasRole('ROLE_ADMIN') || $post->getAuthorId() === $user->getId(),
-            default => false,
-        };
-    }
-}
+```env
+REGISTRATION_ENABLED=false
+CONTACT_ENABLED=false
 ```
 
-### Enregistrer le Voter
+### Dans le contrôleur
 
 ```php
-$checker = new AuthorizationChecker($user);
-$checker->addVoter(new PostVoter());
+// Méthode 1 : denyIfDisabled (recommandée)
+$this->denyIfDisabled('registration', 'Les inscriptions sont fermées.');
 
-if ($checker->isGranted('edit', $post)) {
-    // Autorisé à modifier ce post
+// Méthode 2 : denyAccessIf (plus flexible)
+$this->denyAccessIf(!Config::get('registration.enabled', true), 'Fermé.');
+
+// Méthode 3 : Réponse 403 directe
+if (!Config::get('registration.enabled', true)) {
+    return $this->accessDenied('Inscriptions fermées.');
 }
 ```
 
 ---
 
-## 🚫 Page Access Denied
+## Page 403 personnalisée
 
-Template `templates/errors/403.ogan` affiché automatiquement.
+Créez `templates/errors/403.ogan` :
 
-```php
-// Retourner une réponse 403 personnalisée
-return $this->accessDenied('Vous n\'avez pas accès à cette ressource');
+```html
+{% extend 'layouts/base.ogan' %}
+
+{% block body %}
+<div class="error-page text-center py-20">
+    <h1 class="text-4xl font-bold">🚫 403</h1>
+    <p class="mt-4">{{ message }}</p>
+    <a href="/" class="btn-primary mt-6">Retour à l'accueil</a>
+</div>
+{% endblock %}
 ```
 
----
-
-## ⚙️ Configuration complète
-
-```yaml
-# config/parameters.yaml
-security:
-  user_class: App\Model\User
-  role_hierarchy:
-    ROLE_ADMIN: [ROLE_USER]
-    ROLE_SUPER_ADMIN: [ROLE_ADMIN]
-  access_denied_url: /login
-```
-
----
-
-## 📚 Ressources
-
-- [Documentation Authentification](./authentication.md)
-- [Documentation Middleware](./middlewares.md)
+La page 403 hérite du layout et a accès à :
+- `{{ message }}` - Le message d'erreur
+- `{{ app.user }}` - L'utilisateur connecté
+- `{{ path('route_name') }}` - Les helpers de route
