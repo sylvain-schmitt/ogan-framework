@@ -65,6 +65,43 @@ public function newArticle(): Response
 
 ---
 
+## Affichage conditionnel dans les templates
+
+Utilisez `is_granted()` pour afficher du contenu selon les rôles :
+
+```html
+{% if is_granted('ROLE_ADMIN') %}
+    <nav class="admin-nav">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/articles">Gérer les articles</a>
+        <a href="/categories">Gérer les catégories</a>
+    </nav>
+{% endif %}
+
+{% if is_granted('ROLE_USER') %}
+    <a href="/profile">Mon profil</a>
+{% endif %}
+
+<!-- Navigation conditionnelle complète -->
+<nav>
+    {% if is_granted('ROLE_ADMIN') %}
+        <a href="/dashboard">Admin</a>
+    {% elseif is_granted('ROLE_AUTHOR') %}
+        <a href="/my-articles">Mes articles</a>
+    {% else %}
+        <a href="/">Accueil</a>
+    {% endif %}
+</nav>
+```
+
+### Avantages
+
+- ✅ **Réutilisable** : Le même layout peut servir pour admin et e-commerce
+- ✅ **Sécurisé** : Le contenu est masqué côté serveur, pas juste CSS
+- ✅ **Simple** : Un seul helper pour toutes les vérifications
+
+---
+
 ## Méthodes de contrôle
 
 ### Dans un contrôleur
