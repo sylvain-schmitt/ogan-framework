@@ -47,9 +47,57 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 ### 3. Query Builder Avancé
 - ✅ Déjà implémenté (basique)
 - ✅ **TERMINÉ** : `whereNull()`, `whereNotNull()`, `orWhere()`
-- 💡 **Amélioration** : Support des sous-requêtes
-- 💡 **Amélioration** : Support des unions
-- 💡 **Amélioration** : Support des agrégations (SUM, AVG, COUNT, etc.)
+- 💡 **Amélioration v2** : Support des sous-requêtes
+- 💡 **Amélioration v2** : Support des unions
+- 💡 **Amélioration v2** : **Méthodes d'agrégation fluentes** :
+  ```php
+  // Actuel (requête SQL manuelle)
+  $pdo = Database::getConnection();
+  $stmt = $pdo->prepare("SELECT COUNT(*) FROM comments WHERE article_id = ?");
+  $stmt->execute([$this->id]);
+  $count = $stmt->fetchColumn();
+
+  // Objectif v2 (fluent API)
+  $count = Comment::where('article_id', $this->id)
+                  ->where('status', 'approved')
+                  ->count();
+  
+  // Autres agrégations souhaitées
+  $total = Order::where('user_id', $userId)->sum('amount');
+  $avg = Product::where('category_id', $catId)->avg('price');
+  $max = Article::where('author_id', $authorId)->max('views');
+  $min = Product::where('active', true)->min('price');
+  ```
+- 💡 **Amélioration v2** : **Méthodes de sous-requêtes** :
+  ```php
+  // Objectif v2
+  $articles = Article::whereHas('comments', function($q) {
+      $q->where('status', 'approved');
+  })->get();
+  
+  $users = User::withCount('articles')->get();
+  // → $user->articles_count disponible
+  ```
+- 💡 **Amélioration v2** : **Scopes réutilisables** :
+  ```php
+  class Article extends Model {
+      public function scopePublished($query) {
+          return $query->where('status', 'published');
+      }
+      public function scopeRecent($query, $days = 7) {
+          return $query->where('created_at', '>=', now()->subDays($days));
+      }
+  }
+  // Usage: Article::published()->recent(30)->get();
+  ```
+- 💡 **Amélioration v2** : **Relations avec contraintes** :
+  ```php
+  // Objectif v2
+  public function approvedComments(): HasMany {
+      return $this->hasMany(Comment::class)->where('status', 'approved');
+  }
+  // Accès: $article->approvedComments->count()
+  ```
 
 ### 4. Cache de Requêtes
 - ✅ **TERMINÉ** : Méthode `cache(ttl)` sur le QueryBuilder
