@@ -18,6 +18,7 @@
 							═══════════════════════════════════════════════════════════════════════════ #}
 
 	<body class="min-h-screen flex flex-col bg-gray-50">
+			<div id="page-content">
 			{{ component('navbar') }}
 
 			<main class="flex-1">
@@ -27,7 +28,7 @@
 
 			{{ component('footer') }}
 
-		{# </div> #}
+		    {# </div> #}
 
 		{# ═══════════════════════════════════════════════════════════════════════════
 									📦 SCRIPTS

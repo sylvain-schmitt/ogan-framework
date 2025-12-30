@@ -140,6 +140,7 @@ Ce document liste les améliorations possibles pour rendre le framework encore p
 - ✅ **TERMINÉ** : Support syntaxe chaînée (`user|upper`)
 - ✅ **TERMINÉ** : Architecture modulaire (ExpressionCompiler, DotSyntaxTransformer, etc.)
 - 💡 **Amélioration** : Tests unitaires pour chaque composant du compilateur
+- 💡 **Amélioration** : Mapping des erreurs du template compilé vers le fichier source (pour afficher le bon numéro de ligne en cas d'erreur)
 
 ### 5. Extension personnalisée `.ogan`
 - ✅ **TERMINÉ** : Extension `.ogan` pour les fichiers templates

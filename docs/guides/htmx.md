@@ -250,3 +250,4 @@ Notez que la page doit contenir un élément `<div id="flashes-container">` pour
 
 - [Documentation Officielle HTMX](https://htmx.org/docs/)
 - [Exemples HTMX](https://htmx.org/examples/)
+- [Tutoriel : CRUD Articles avec HTMX](./htmx-crud-example.md)

@@ -74,6 +74,7 @@ auth:
   # Les rôles sont vérifiés dans l'ordre, le premier qui match est utilisé
   role_redirects:
     ROLE_ADMIN: /dashboard       # Les admins vont au dashboard
+    ROLE_USER: /dashboard       # Les utilisateurs vont au dashboard
     # ROLE_AUTHOR: /my-articles  # Exemple: les auteurs vers leurs articles
 
 # ─────────────────────────────────────────────────────────────────────────────

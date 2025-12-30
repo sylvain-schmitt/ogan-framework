@@ -2,36 +2,34 @@
 
 Bienvenue dans la documentation complète du framework Ogan.
 
-## 📖 Guides
+## 🚀 Démarrage
 
-- **[Guide Pédagogique](guides/pedagogique.md)** - Explication détaillée de chaque composant du framework
 - **[Installation](guides/installation.md)** - Guide d'installation et de configuration
-- **[Configuration](guides/configuration.md)** - Guide complet de configuration (.env vs parameters.php)
-- **[Authentification](guides/authentication.md)** - Système d'authentification complet (`make:auth`)
-- **[Génération de Code](guides/code-generation.md)** - Générateurs de code (controllers, forms, models)
-- **[Debugging](guides/debugging.md)** - Outils de debug: dump(), dd(), Debug Bar, ErrorHandler
-- **[Syntaxe des Templates](guides/template-syntax.md)** - Guide complet de la syntaxe `{{ }}` (style Twig/Blade)
-- **[Guide HTMX](guides/htmx.md)** - Intégration et utilisation de HTMX pour des interfaces dynamiques
-- **[Docker](guides/docker.md)** - Démarrage rapide avec Docker (MySQL, PostgreSQL)
-- **[Explications](guides/explications.md)** - Explications détaillées (ORM, .env, cookies.txt, etc.)
-- **[Bases de Données](guides/databases.md)** - Support multi-bases de données (MySQL, PostgreSQL, SQLite, SQL Server)
-- **[Pagination](guides/pagination.md)** - Pagination intégrée avec rendu Tailwind
+- **[Configuration](guides/configuration.md)** - Paramètres et variables d'environnement
+- **[Docker](guides/docker.md)** - Environnement de développement
 
-## 🎯 Exemples
+## 🛠️ Composants Principaux
 
-- **[FormTypes](examples/form-types.md)** - Guide complet pour créer et utiliser des formulaires
+- **[Templates & Vues](guides/templates.md)** - Syntaxe `{{ }}`, héritage, composants et helpers
+- **[Formulaires](guides/forms.md)** - Création, validation et types de champs
+- **[ORM & Modèles](guides/orm.md)** - Active Record, architecture et relations
+- **[Bases de Données](guides/databases.md)** - Configuration multi-bases (MySQL, PGSQL, SQLite...)
+- **[Sécurité & Auth](guides/security.md)** - Authentification (`make:auth`) et Contrôle d'accès (Rôles)
 
-## 🏗️ Architecture
+## ⚡ Guides Avancés
 
-- **[Architecture Composer](architecture/composer.md)** - Comment fonctionne l'architecture avec Composer
+- **[HTMX](guides/htmx.md)** - Interfaces dynamiques sans JS complexe
+    - [Tutoriel CRUD](guides/htmx-crud-example.md)
+- **[Génération de Code](guides/code-generation.md)** - Utiliser `make:controller`, `make:model`, etc.
+- **[API REST](guides/api-rest.md)** - Créer des APIs JSON
+- **[Debugging](guides/debugging.md)** - Outils de debug et ErrorHandler
 
-## 📋 Référence
+## 🏗️ Architecture & Référence
 
-- **[API du Framework](reference/framework-api.md)** - Documentation de l'API du framework
-- **[Améliorations](reference/ameliorations.md)** - Suggestions d'améliorations futures
-- **[Changelog](reference/changelog.md)** - Historique des modifications et phases de développement
+- **[Guide Pédagogique](guides/pedagogique.md)** - Comprendre le fonctionnement interne
+- **[API du Framework](reference/framework-api.md)** - Référence technique
+- **[Changelog](reference/changelog.md)** - Historique des versions
 
 ---
 
 **Retour au [README principal](../README.md)**
-

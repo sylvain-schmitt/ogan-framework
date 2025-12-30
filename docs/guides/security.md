@@ -1,20 +1,73 @@
-# 🔐 Sécurité & Contrôle d'Accès
+# 🔐 Sécurité & Authentification
 
-> Protéger vos routes avec des rôles et permissions
+> Guide complet sur la sécurisation de vos applications Ogan : authentification, rôles, et contrôle d'accès.
 
-## Table des matières
+## 📋 Table des matières
 
-- [Configuration des rôles](#configuration-des-rôles)
-- [Attribut IsGranted](#attribut-isgranted)
-- [Méthodes de contrôle](#méthodes-de-contrôle)
-- [Redirection après login](#redirection-après-login)
-- [Désactiver des routes](#désactiver-des-routes)
+- [Authentification (Auth)](#authentification-auth)
+    - [Génération automatique (`make:auth`)](#génération-automatique-makeauth)
+    - [Configuration](#configuration)
+    - [Utilisateurs & Rôles](#utilisateurs--rôles)
+- [Contrôle d'Accès (Authorization)](#contrôle-dacces-authorization)
+    - [Attribut `IsGranted`](#attribut-isgranted)
+    - [Dans les Contrôleurs](#dans-les-contrôleurs)
+    - [Dans les Templates](#dans-les-templates)
+    - [Désactiver des routes](#désactiver-des-routes)
+- [Support HTMX](#support-htmx)
 
 ---
 
-## Configuration des rôles
+## Authentification (Auth)
 
-Les rôles sont stockés dans le champ `roles` du User (JSON).
+Le framework Ogan inclut un générateur complet pour mettre en place un système d'authentification robuste en quelques secondes.
+
+### Génération automatique (`make:auth`)
+
+La commande `make:auth` génère tout le nécessaire : Modèles, Contrôleurs, Vues, et Services.
+
+```bash
+# Générer le système d'authentification complet
+php bin/console make:auth
+
+# Option : avec support HTMX préconfiguré (recommandé)
+php bin/console make:auth --htmx
+
+# Appliquer les migrations pour créer les tables
+php bin/console migrate
+```
+
+**Ce qui est généré :**
+*   **Contrôleurs** : `SecurityController` (login/register/reset), `DashboardController`.
+*   **Modèle** : `User` (avec gestion des rôles et hashage de mot de passe).
+*   **Vues** : Pages de connexion, inscription, dashboard, profil, emails.
+*   **Sécurité** : Services de vérification d'email et reset de mot de passe.
+
+### Configuration
+
+Les options principales se trouvent dans `config/parameters.yaml` :
+
+```yaml
+auth:
+  # Envoyer un email de vérification à l'inscription (true/false)
+  send_verification_email: false
+  
+  # Activer la fonctionnalité "Mot de passe oublié" (true/false)
+  send_password_reset_email: true
+  
+  # Redirections
+  login_redirect: /dashboard
+  logout_redirect: /login
+  
+  # Redirections spécifiques par rôle (optionnel)
+  role_redirects:
+    ROLE_ADMIN: /admin
+```
+
+> **Note** : Pour l'envoi d'emails, n'oubliez pas de configurer `MAILER_DSN` dans votre fichier `.env`.
+
+### Utilisateurs & Rôles
+
+Les rôles sont stockés dans le champ `roles` du modèle `User` (tableau JSON).
 
 ```php
 // Modèle User
@@ -22,171 +75,111 @@ $user->setRoles(['ROLE_ADMIN', 'ROLE_USER']);
 $user->hasRole('ROLE_ADMIN'); // true
 ```
 
-### Création d'un admin
-
+**Helper CLI : Créer un admin**
 ```bash
 php bin/console make:admin
 ```
 
 ---
 
-## Attribut IsGranted
+## Contrôle d'Accès (Authorization)
 
-### Sur une classe (toutes les routes)
+Une fois authentifiés, vous devez définir ce que les utilisateurs ont le droit de faire.
 
+### Attribut `IsGranted`
+
+C'est la méthode recommandée pour protéger vos contrôleurs.
+
+**Sur une classe entière :**
 ```php
 use Ogan\Security\Attribute\IsGranted;
 
-#[IsGranted('ROLE_ADMIN', message: 'Accès réservé aux admins.')]
-class DashboardController extends AbstractController
+#[IsGranted('ROLE_ADMIN', message: 'Espace réservé aux administrateurs.')]
+class AdminController extends AbstractController
 {
-    // Toutes les routes nécessitent ROLE_ADMIN
+    // Toutes les méthodes ici nécessitent ROLE_ADMIN
 }
 ```
 
-### Sur une méthode (une seule route)
-
+**Sur une méthode spécifique :**
 ```php
 #[Route('/articles/new', methods: ['GET', 'POST'])]
-#[IsGranted('ROLE_AUTHOR', message: 'Vous devez être auteur.')]
-public function newArticle(): Response
+#[IsGranted('ROLE_AUTHOR')]
+public function create(): Response
 {
     // ...
 }
 ```
 
-### Comportement
+### Dans les Contrôleurs
 
-| Situation | Résultat |
-|-----------|----------|
-| Non connecté | Redirige vers `/login` |
-| Connecté sans le rôle | Affiche page 403 |
-| Connecté avec le rôle | Accès autorisé ✅ |
-
----
-
-## Affichage conditionnel dans les templates
-
-Utilisez `is_granted()` pour afficher du contenu selon les rôles :
-
-```html
-{% if is_granted('ROLE_ADMIN') %}
-    <nav class="admin-nav">
-        <a href="/dashboard">Dashboard</a>
-        <a href="/articles">Gérer les articles</a>
-        <a href="/categories">Gérer les catégories</a>
-    </nav>
-{% endif %}
-
-{% if is_granted('ROLE_USER') %}
-    <a href="/profile">Mon profil</a>
-{% endif %}
-
-<!-- Navigation conditionnelle complète -->
-<nav>
-    {% if is_granted('ROLE_ADMIN') %}
-        <a href="/dashboard">Admin</a>
-    {% elseif is_granted('ROLE_AUTHOR') %}
-        <a href="/my-articles">Mes articles</a>
-    {% else %}
-        <a href="/">Accueil</a>
-    {% endif %}
-</nav>
-```
-
-### Avantages
-
-- ✅ **Réutilisable** : Le même layout peut servir pour admin et e-commerce
-- ✅ **Sécurisé** : Le contenu est masqué côté serveur, pas juste CSS
-- ✅ **Simple** : Un seul helper pour toutes les vérifications
-
----
-
-## Méthodes de contrôle
-
-### Dans un contrôleur
+Vous pouvez vérifier les droits dynamiquement dans vos méthodes :
 
 ```php
-// Vérifier un rôle
-if ($this->isGranted('ROLE_ADMIN')) {
+public function edit(int $id): Response
+{
+    $article = Article::find($id);
+
+    // Vérification explicite
+    if (!$this->isGranted('ROLE_ADMIN') && $article->getAuthorId() !== $this->getUser()->getId()) {
+        throw $this->createAccessDeniedException('Vous ne pouvez pas modifier cet article.');
+    }
+
+    // Version courte (lance une exception 403 si faux)
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
+    
     // ...
 }
-
-// Bloquer si pas le rôle (lance AccessDeniedException)
-$this->denyAccessUnlessGranted('ROLE_ADMIN', null, 'Accès admin requis.');
-
-// Retourner une réponse 403 directement
-return $this->accessDenied('Accès refusé.');
 ```
 
----
+### Dans les Templates
 
-## Redirection après login
+Utilisez la fonction `is_granted()` pour afficher du contenu conditionnel.
 
-### Configuration dans `parameters.yaml`
+```html
+<!-- Cacher un lien aux non-admins -->
+{% if is_granted('ROLE_ADMIN') %}
+    <a href="{{ route('admin_dashboard') }}" class="btn btn-danger">Administration</a>
+{% endif %}
 
-```yaml
-auth:
-  login_redirect: /              # Défaut pour les utilisateurs
-  logout_redirect: /login
-
-  # Redirection par rôle (optionnel)
-  role_redirects:
-    ROLE_ADMIN: /dashboard       # Admins → dashboard
-    ROLE_AUTHOR: /my-articles    # Auteurs → leurs articles
+<!-- Affichage conditionnel complexe -->
+{% if is_granted('ROLE_ADMIN') %}
+    <span class="badge badge-admin">Admin</span>
+{% elseif is_granted('ROLE_USER') %}
+    <span class="badge badge-user">Membre</span>
+{% else %}
+    <span class="badge badge-guest">Visiteur</span>
+{% endif %}
 ```
 
-### Comment ça fonctionne
+### Désactiver des routes
 
-1. Après login, le système vérifie les rôles de l'utilisateur
-2. Le premier rôle qui match dans `role_redirects` définit l'URL
-3. Si aucun rôle ne match, `login_redirect` est utilisé
+Il est parfois utile de désactiver temporairement des fonctionnalités (ex: maintenance ou feature flag) via la configuration.
 
----
-
-## Désactiver des routes
-
-### Via `.env`
-
+**Dans `.env` :**
 ```env
 REGISTRATION_ENABLED=false
-CONTACT_ENABLED=false
 ```
 
-### Dans le contrôleur
-
+**Dans le contrôleur :**
 ```php
-// Méthode 1 : denyIfDisabled (recommandée)
-$this->denyIfDisabled('registration', 'Les inscriptions sont fermées.');
-
-// Méthode 2 : denyAccessIf (plus flexible)
-$this->denyAccessIf(!Config::get('registration.enabled', true), 'Fermé.');
-
-// Méthode 3 : Réponse 403 directe
-if (!Config::get('registration.enabled', true)) {
-    return $this->accessDenied('Inscriptions fermées.');
+public function register(): Response
+{
+    // Vérifie config('registration.enabled')
+    $this->denyIfDisabled('registration', 'Les inscriptions sont temporairement fermées.');
+    
+    // ...
 }
 ```
 
 ---
 
-## Page 403 personnalisée
+## Support HTMX
 
-Créez `templates/errors/403.ogan` :
+Le système d'authentification généré est compatible avec HTMX.
 
-```html
-{% extend 'layouts/base.ogan' %}
+*   **Mode HTMX (`--htmx`)** : Ajoute automatiquement les scripts et configure le dashboard pour une navigation fluide (SPA-like) via AJAX.
+*   **Barre de progression** : Incluse automatiquement pour les transitions de page.
+*   **Formulaires** : Les formulaires de login/inscription fonctionnent de manière standard pour garantir la compatibilité maximale, mais peuvent être "boostés".
 
-{% block body %}
-<div class="error-page text-center py-20">
-    <h1 class="text-4xl font-bold">🚫 403</h1>
-    <p class="mt-4">{{ message }}</p>
-    <a href="/" class="btn-primary mt-6">Retour à l'accueil</a>
-</div>
-{% endblock %}
-```
-
-La page 403 hérite du layout et a accès à :
-- `{{ message }}` - Le message d'erreur
-- `{{ app.user }}` - L'utilisateur connecté
-- `{{ path('route_name') }}` - Les helpers de route
+Si vous utilisez HTMX, le `HtmxHelper` injecte automatiquement les scripts nécessaires dans `layout.ogan` via `{{ htmx_script() }}`.

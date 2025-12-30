@@ -1,58 +1,60 @@
 # 📝 Formulaires - Ogan Framework
 
-Ce guide explique comment créer et utiliser les formulaires dans le framework Ogan.
+Ce guide explique comment créer, gérer et valider des formulaires dans Ogan Framework.
 
 ## 📋 Table des matières
 
 - [Créer un FormType](#créer-un-formtype)
 - [Utiliser un formulaire dans un contrôleur](#utiliser-un-formulaire-dans-un-contrôleur)
-- [Rendre le formulaire complet](#rendre-le-formulaire-complet)
-- [Rendre les champs individuellement](#rendre-les-champs-individuellement)
-- [Types de champs disponibles](#types-de-champs-disponibles)
-- [Contraintes de validation](#contraintes-de-validation)
+- [Rendu dans les vues](#rendu-dans-les-vues)
+- [Validation des données](#validation-des-données)
+- [Référence des Champs (Types)](#référence-des-champs-types)
+    - [Champs de base](#champs-de-base)
+    - [Champs avancés (Couleur, Wysiwyg...)](#champs-avancés)
 
 ---
 
 ## Créer un FormType
 
-### Commande de génération
+Les formulaires sont définis dans des classes dédiées (FormType) pour être réutilisables.
 
+**Commande de génération :**
 ```bash
 php bin/console make:form User
 ```
 
-### Structure d'un FormType
+**Structure d'exemple (`src/Form/UserType.php`) :**
 
 ```php
-<?php
-
 namespace App\Form;
 
 use Ogan\Form\AbstractType;
 use Ogan\Form\FormBuilder;
-use Ogan\Form\Types\{TextType, EmailType, PasswordType, SubmitType};
+use Ogan\Form\Types\{TextType, EmailType, PasswordType, SelectType, SubmitType};
 use Ogan\Form\Constraint\{Required, Email, MinLength};
 
-class UserFormType extends AbstractType
+class UserType extends AbstractType
 {
     public function buildForm(FormBuilder $builder, array $options): void
     {
         $builder
             ->add('name', TextType::class, [
-                'label' => 'Nom',
-                'constraints' => [new Required(), new MinLength(2)],
+                'label' => 'Nom complet',
+                'constraints' => [new Required()],
+                'attr' => ['placeholder' => 'Jean Dupont']
             ])
             ->add('email', EmailType::class, [
-                'label' => 'Email',
-                'constraints' => [new Required(), new Email()],
+                'label' => 'Adresse Email',
+                'constraints' => [new Required(), new Email()]
             ])
-            ->add('password', PasswordType::class, [
-                'label' => 'Mot de passe',
-                'constraints' => [new Required(), new MinLength(8)],
+            ->add('role', SelectType::class, [
+                'label' => 'Rôle',
+                'choices' => [
+                    'ROLE_USER' => 'Utilisateur',
+                    'ROLE_ADMIN' => 'Administrateur',
+                ]
             ])
-            ->add('submit', SubmitType::class, [
-                'label' => 'Enregistrer',
-            ]);
+            ->add('submit', SubmitType::class, ['label' => 'Enregistrer']);
     }
 }
 ```
@@ -61,29 +63,29 @@ class UserFormType extends AbstractType
 
 ## Utiliser un formulaire dans un contrôleur
 
+Dans votre contrôleur, utilisez `FormFactory` pour instancier et gérer le formulaire.
+
 ```php
-use App\Form\UserFormType;
-
-#[Route(path: '/user/create', methods: ['GET', 'POST'], name: 'user_create')]
-public function create()
+// Dans une méthode de contrôleur
+public function register(): Response
 {
-    $form = $this->formFactory->create(UserFormType::class, [
-        'action' => '/user/store',
-        'method' => 'POST',
-    ]);
+    $form = $this->formFactory->create(UserType::class);
 
-    if ($this->request->isMethod('POST')) {
-        $form->handleRequest($this->request);
+    // Gérer la soumission (si c'est une requête POST)
+    $form->handleRequest($this->request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $data = $form->getData();
-            // Traiter les données...
-            $this->addFlash('success', 'Utilisateur créé !');
-            return $this->redirect('/users');
-        }
+    if ($form->isSubmitted() && $form->isValid()) {
+        $data = $form->getData();
+        
+        // Sauvegarder l'utilisateur...
+        // $user = new User($data);
+        // $user->save();
+
+        $this->addFlash('success', 'Inscription réussie !');
+        return $this->redirect('/login');
     }
 
-    return $this->render('user/create.ogan', [
+    return $this->render('auth/register.ogan', [
         'form' => $form->createView()
     ]);
 }
@@ -91,231 +93,134 @@ public function create()
 
 ---
 
-## Rendre le formulaire complet
+## Rendu dans les vues
 
-La méthode la plus simple : laisser le framework générer tout le HTML.
+### Méthode simple (Rendu automatique)
+
+La méthode la plus rapide. Affiche tous les champs les uns après les autres.
 
 ```html
-<!-- Dans votre template .ogan -->
-{{ form }}
+<!-- templates/auth/register.ogan -->
+<h1>Inscription</h1>
+
+<div class="form-container">
+    {% form.render() %}
+</div>
 ```
 
-Cela génère :
-- La balise `<form>` avec `method` et `action`
-- Tous les champs avec leurs labels et erreurs
-- L'attribut `enctype="multipart/form-data"` si un champ fichier est présent
-- La balise `</form>`
+### Méthode champ par champ (Contrôle total)
 
----
-
-## Rendre les champs individuellement
-
-Pour un contrôle total sur le layout, vous pouvez rendre chaque champ séparément ou même ses composants individuels.
-
-### Syntaxe disponible
-
-| Syntaxe | Description |
-|---------|-------------|
-| `{{ form.email }}` | Champ complet (label + input + erreurs) |
-| `{{ form.email.label }}` | Juste le label |
-| `{{ form.email.widget }}` | Juste l'input |
-| `{{ form.email.errors }}` | Juste les erreurs |
-| `{{ form.email.row }}` | Alias du champ complet |
-
-### Exemple basique
+Pour personnaliser le layout (CSS, grids, etc.), affichez chaque champ individuellement.
 
 ```html
-<form method="POST" action="{{ path('user_store') }}">
-    
-    <div class="mb-4">
-        {{ form.name }}
-    </div>
-    
-    <div class="mb-4">
-        {{ form.email }}
-    </div>
-    
-    {{ form.submit }}
-    
-</form>
-```
+<form method="POST">
+    <!-- Champ sécurisé CSRF (automatique, mais peut être manuel) -->
+    {{ form._csrf_token }}
 
-### Exemple avec contrôle total
-
-Quand vous avez besoin d'un layout très personnalisé :
-
-```html
-<form method="POST" action="{{ path('register') }}" class="max-w-md mx-auto">
-    
-    <h2 class="text-2xl font-bold mb-6">Inscription</h2>
-    
-    <!-- Layout personnalisé avec label externe -->
-    <div class="mb-4">
-        {{ form.email.label }}
-        <div class="flex items-center">
-            <span class="text-gray-500 mr-2">@</span>
-            {{ form.email.widget }}
+    <div class="grid grid-cols-2 gap-4">
+        <div class="col">
+            {{ form.name }}
         </div>
-        {{ form.email.errors }}
-    </div>
-    
-    <!-- Deux champs côte à côte, widgets seulement -->
-    <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>
-            {{ form.firstName.label }}
-            {{ form.firstName.widget }}
-        </div>
-        <div>
-            {{ form.lastName.label }}
-            {{ form.lastName.widget }}
+        <div class="col">
+            {{ form.email }}
         </div>
     </div>
-    
-    <!-- Erreurs groupées en bas -->
-    <div class="text-red-600 mb-4">
-        {{ form.firstName.errors }}
-        {{ form.lastName.errors }}
-    </div>
-    
-    <!-- Mot de passe avec aide contextuelle -->
-    <div class="mb-4">
+
+    <!-- Composants individuels d'un champ -->
+    <div class="custom-field">
         {{ form.password.label }}
         {{ form.password.widget }}
-        <p class="text-sm text-gray-500 mt-1">
-            Minimum 8 caractères, incluant une majuscule
-        </p>
+        <span class="help-text">Min. 8 caractères</span>
         {{ form.password.errors }}
     </div>
-    
-    {{ form.submit }}
-    
+
+    <div class="actions mt-4">
+        {{ form.submit }}
+    </div>
 </form>
 ```
 
-### Afficher les erreurs globales
-
-```html
-{% if form.getErrors() %}
-    <div class="bg-red-100 text-red-700 p-4 rounded mb-4">
-        {% for field, errors in form.getErrors() %}
-            {% for error in errors %}
-                <p>{{ error }}</p>
-            {% endfor %}
-        {% endfor %}
-    </div>
-{% endif %}
-```
+**Syntaxe disponible :**
+| Syntaxe | Description |
+|---------|-------------|
+| `{{ form.field }}` | Rendu complet (Label + Widget + Erreurs) |
+| `{{ form.field.label }}` | Libellé seulement |
+| `{{ form.field.widget }}` | Input HTML seulement |
+| `{{ form.field.errors }}` | Liste des erreurs seulement |
 
 ---
 
-## Types de champs disponibles
+## Validation des données
 
-| Type | Classe | Usage |
-|------|--------|-------|
-| Texte | `TextType::class` | Champ texte simple |
-| Email | `EmailType::class` | Champ email avec validation HTML5 |
-| Mot de passe | `PasswordType::class` | Champ masqué |
-| Nombre | `NumberType::class` | Champ numérique |
-| Textarea | `TextareaType::class` | Zone de texte multiligne |
-| Select | `SelectType::class` | Liste déroulante |
-| Checkbox | `CheckboxType::class` | Case à cocher |
-| Fichier | `FileType::class` | Upload de fichier |
-| Caché | `HiddenType::class` | Champ invisible |
-| Submit | `SubmitType::class` | Bouton de soumission |
-
-### Exemple avec différents types
+La validation se fait via les **Constraints** passées dans les options du champ.
 
 ```php
-$builder
-    ->add('title', TextType::class, ['label' => 'Titre'])
-    ->add('category', SelectType::class, [
-        'label' => 'Catégorie',
-        'choices' => [
-            'tech' => 'Technologie',
-            'sport' => 'Sport',
-            'culture' => 'Culture',
-        ],
-    ])
-    ->add('content', TextareaType::class, [
-        'label' => 'Contenu',
-        'attr' => ['rows' => 10],
-    ])
-    ->add('published', CheckboxType::class, [
-        'label' => 'Publier immédiatement',
-        'required' => false,
-    ])
-    ->add('image', FileType::class, [
-        'label' => 'Image de couverture',
-        'accept' => 'image/*',
-        'required' => false,
-    ]);
+use Ogan\Form\Constraint\{Required, Email, MinLength, EqualTo, UniqueEntity};
+
+$builder->add('email', EmailType::class, [
+    'constraints' => [
+        new Required('Ce champ est obligatoire'),
+        new Email('Format invalide'),
+        new UniqueEntity(User::class, 'email', 'Cet email existe déjà')
+    ]
+]);
 ```
+
+**Principales contraintes :**
+*   `Required`
+*   `Email`
+*   `MinLength(min)`, `MaxLength(max)`
+*   `Min(val)`, `Max(val)` (Nombres)
+*   `Regex(pattern)`
+*   `EqualTo(fieldName)` (ex: confirmation de mot de passe)
+*   `UniqueEntity(Class, field)` (Vérification BDD)
 
 ---
 
-## Contraintes de validation
+## Référence des Champs (Types)
 
-Les contraintes s'appliquent au `handleRequest()` pour valider les données.
+### Champs de base
 
-| Contrainte | Usage |
-|------------|-------|
-| `Required()` | Champ obligatoire |
-| `Email()` | Email valide |
-| `MinLength(n)` | Longueur minimum |
-| `MaxLength(n)` | Longueur maximum |
-| `Min(n)` | Valeur minimum (nombres) |
-| `Max(n)` | Valeur maximum (nombres) |
-| `Regex($pattern)` | Expression régulière |
-| `EqualTo($field)` | Égalité avec un autre champ |
-| `UniqueEntity($model, $field)` | Unicité en BDD |
+| Classe | Description | Options spécifiques |
+|--------|-------------|---------------------|
+| `TextType` | Input texte simple | `placeholder` |
+| `EmailType` | Input type email | |
+| `PasswordType` | Input type password | |
+| `TextareaType` | Textarea | `rows` |
+| `NumberType` | Input number | `min`, `max`, `step` |
+| `DateType` | Input date | `min`, `max` (format Y-m-d) |
+| `CheckboxType` | Input checkbox | `checked` (bool) |
+| `SelectType` | Liste déroulante | `choices` (array), `multiple` (bool), `expanded` (radio/checkbox list) |
+| `RadioType` | Boutons radio | `choices`, `inline` (bool) |
+| `FileType` | Input file | `accept` (extensions/MIME), `multiple` |
+| `HiddenType` | Input hidden | |
+| `SubmitType` | Bouton submit | |
 
-### Exemple
+### Champs avancés
+
+#### ColorType
+Sélecteur de couleur natif (`<input type="color">`).
 
 ```php
-$builder
-    ->add('email', EmailType::class, [
-        'constraints' => [
-            new Required('L\'email est obligatoire'),
-            new Email('Email invalide'),
-            new UniqueEntity(User::class, 'email', 'Cet email existe déjà'),
-        ],
-    ])
-    ->add('password', PasswordType::class, [
-        'constraints' => [
-            new Required(),
-            new MinLength(8, 'Minimum 8 caractères'),
-        ],
-    ])
-    ->add('password_confirm', PasswordType::class, [
-        'constraints' => [
-            new EqualTo('password', 'Les mots de passe ne correspondent pas'),
-        ],
-    ]);
+use Ogan\Form\Types\ColorType;
+
+$builder->add('theme_color', ColorType::class, [
+    'label' => 'Couleur du thème',
+    'attr' => ['value' => '#ff0000']
+]);
 ```
 
----
-
-## Options communes des champs
-
-| Option | Description | Exemple |
-|--------|-------------|---------|
-| `label` | Libellé affiché | `'label' => 'Votre nom'` |
-| `required` | Champ requis (HTML5) | `'required' => false` |
-| `attr` | Attributs HTML | `'attr' => ['class' => 'my-class']` |
-| `data` | Valeur par défaut | `'data' => 'default'` |
-| `placeholder` | Placeholder | `'placeholder' => 'Entrez...'` |
-| `constraints` | Contraintes de validation | `'constraints' => [new Required()]` |
-
----
-
-## Bonnes pratiques
-
-1. **Un FormType par entité** : Créez un FormType dédié pour chaque modèle.
-2. **Contraintes dans le FormType** : Gardez la logique de validation proche du formulaire.
-3. **Rendu individuel pour les layouts complexes** : Utilisez `{{ form.field }}` quand vous avez besoin de contrôle.
-4. **Messages d'erreur personnalisés** : Passez un message aux contraintes pour une meilleure UX.
+#### WysiwygType
+Éditeur de texte riche (basé sur TinyMCE via CDN).
 
 ```php
-new Required('Ce champ est obligatoire')
-new MinLength(8, 'Le mot de passe doit faire au moins 8 caractères')
+use Ogan\Form\Types\WysiwygType;
+
+$builder->add('content', WysiwygType::class, [
+    'label' => 'Contenu de l\'article',
+    'height' => 400,          // Hauteur en pixels
+    'toolbar' => 'simple',    // minimal, simple, full
+]);
 ```
+
+> **Note** : Pour afficher le contenu d'un Wysiwyg dans Twig sans échappement, utilisez le filtre `raw` : `{{ article.content|raw }}`.
