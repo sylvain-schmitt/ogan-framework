@@ -165,7 +165,7 @@ Protection contre les attaques Cross-Site Request Forgery.
 **`csrf_input()`** : Génère le champ caché complet.
 ```html
 <form method="POST" action="...">
-    {{ csrf_input() }}
+    {{ form._csrf_token }}
     <!-- ... -->
 </form>
 ```
