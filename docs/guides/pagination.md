@@ -62,6 +62,8 @@ class UserController extends AbstractController
 | `currentPage()` | Numéro de la page courante |
 | `lastPage()` | Numéro de la dernière page |
 | `count()` | Nombre d'éléments sur cette page |
+| `hasPages()` | `true` s'il y a plus d'une page |
+| `getSimpleRange()` | Tableau `[1, 2, 3, ...]` pour itération |
 
 ### Navigation
 
@@ -133,6 +135,119 @@ if ($paginator->hasMorePages()) {
     echo '<a href="' . $paginator->nextPageUrl() . '">Suivant →</a>';
 }
 ```
+
+---
+
+## 🎨 Templates Personnalisés
+
+Vous pouvez créer des templates de pagination entièrement personnalisés dans votre projet. Le `Paginator` cherche automatiquement les templates dans `templates/pagination/` de votre application **avant** d'utiliser ceux du framework.
+
+### Structure des Templates
+
+Créez un fichier dans `templates/pagination/` avec l'extension `.ogan` :
+
+```
+templates/
+└── pagination/
+    ├── htmx.ogan      # Override du template HTMX par défaut
+    ├── tailwind.ogan  # Override du template Tailwind
+    └── custom.ogan    # Votre propre template
+```
+
+### Variables Disponibles
+
+Dans vos templates, vous avez accès à :
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `paginator` | `Paginator` | L'objet paginator complet |
+| `pages` | `array` | Tableau d'objets page pré-calculés |
+| `target` | `string` | Sélecteur CSS cible (pour HTMX) |
+| `swap` | `string` | Type de swap HTMX |
+
+### Structure de l'Objet Page
+
+Chaque élément du tableau `pages` est un objet avec :
+
+| Propriété | Type | Description |
+|-----------|------|-------------|
+| `page.type` | `string` | `'current'`, `'normal'`, ou `'ellipsis'` |
+| `page.number` | `int` | Numéro de la page |
+| `page.url` | `string` | URL de la page (vide pour ellipsis) |
+
+### Exemple de Template HTMX Personnalisé
+
+```html
+{# templates/pagination/htmx.ogan #}
+{% if paginator.hasPages() %}
+<nav role="navigation" aria-label="Pagination" class="flex items-center justify-between mt-8">
+    
+    <!-- Infos -->
+    <p class="text-sm text-gray-500">
+        Page {{ paginator.currentPage() }} sur {{ paginator.lastPage() }}
+    </p>
+
+    <!-- Liens -->
+    <div class="flex items-center gap-2">
+        {# Précédent #}
+        {% if paginator.onFirstPage() %}
+            <span class="px-3 py-2 text-gray-400 cursor-not-allowed">←</span>
+        {% else %}
+            <a href="{{ paginator.previousPageUrl() }}"
+               hx-get="{{ paginator.previousPageUrl() }}"
+               hx-target="{{ target }}"
+               hx-swap="{{ swap }}"
+               hx-disinherit="*"
+               class="px-3 py-2 hover:bg-gray-100 rounded">←</a>
+        {% endif %}
+
+        {# Numéros de page #}
+        {% for page in pages %}
+            {% if page.type == 'ellipsis' %}
+                <span class="px-3 py-2">...</span>
+            {% elseif page.type == 'current' %}
+                <span class="px-3 py-2 bg-primary text-white rounded">{{ page.number }}</span>
+            {% else %}
+                <a href="{{ page.url }}"
+                   hx-get="{{ page.url }}"
+                   hx-target="{{ target }}"
+                   hx-swap="{{ swap }}"
+                   hx-disinherit="*"
+                   class="px-3 py-2 hover:bg-gray-100 rounded">{{ page.number }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {# Suivant #}
+        {% if paginator.hasMorePages() %}
+            <a href="{{ paginator.nextPageUrl() }}"
+               hx-get="{{ paginator.nextPageUrl() }}"
+               hx-target="{{ target }}"
+               hx-swap="{{ swap }}"
+               hx-disinherit="*"
+               class="px-3 py-2 hover:bg-gray-100 rounded">→</a>
+        {% else %}
+            <span class="px-3 py-2 text-gray-400 cursor-not-allowed">→</span>
+        {% endif %}
+    </div>
+</nav>
+{% endif %}
+```
+
+### Utilisation
+
+```php
+// Dans le controller
+$articles = Article::paginate(15);
+
+// Dans le template - utilise automatiquement votre templates/pagination/htmx.ogan
+{{ articles.linksHtmx('#articles-list')|raw }}
+
+// Ou spécifiez un template personnalisé
+{{ articles.links('custom')|raw }}
+```
+
+> [!TIP]
+> **hx-disinherit="*"** : Ajoutez cet attribut sur les liens de pagination pour éviter qu'ils héritent des attributs `hx-select` ou autres du `<body>`. C'est particulièrement important si votre layout utilise `hx-boost="true"` avec `hx-select`.
 
 ---
 
