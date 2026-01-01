@@ -251,90 +251,147 @@ $articles = Article::paginate(15);
 
 ---
 
-## ⚡ Support HTMX
+## ⚡ Pagination HTMX
 
-### Configuration HTMX
+Ogan Framework intègre une solution robuste pour la pagination HTMX qui contourne les bugs connus de HTMX 2.0.8.
 
-Dans votre layout (`base.ogan`), placez `htmx_script()` **à la fin du `<body>`** :
+### Prérequis
 
-```html
-<body>
-    <!-- Contenu de la page -->
-    {{ section('body') }}
-    
-    <!-- HTMX en fin de body pour initialisation correcte -->
-    {{ htmx_script() }}
-</body>
-```
+1. Activer HTMX dans `config/parameters.yaml` :
 
-> [!IMPORTANT]
-> Placer le script dans le `<head>` empêche HTMX de traiter les éléments correctement.
-
-### Barre de Progression Automatique
-
-Quand HTMX est activé, une barre de progression bleue apparaît automatiquement en haut de la page lors des requêtes HTMX.
-
-**Configuration** (`config/parameters.yaml`) :
 ```yaml
 frontend:
   htmx:
     enabled: true
-    progress_bar: true  # Désactiver avec false
+    progress_bar: true
 ```
 
-### Liens de Pagination HTMX
+2. Ajouter `{{ htmx_script() }}` à la fin du `<body>` de votre layout.
 
-Utilisez `linksHtmx()` ou le template `htmx` :
+> [!IMPORTANT]
+> Le framework injecte automatiquement le fix de pagination HTMX quand `htmx.enabled: true`. Aucun JavaScript supplémentaire n'est requis.
 
-```html
-<!-- Option 1 : Méthode linksHtmx() -->
-<div id="content">
-    <table>...</table>
-    {{ users.linksHtmx('#content', 'innerHTML')|raw }}
-</div>
+### Génération Automatique
 
-<!-- Option 2 : Template htmx -->
-<div id="content">
-    <table>...</table>
-    {{ users.links('htmx')|raw }}
-</div>
+Utilisez la commande `make:pagination` avec l'option `--htmx` :
+
+```bash
+php bin/console make:pagination Article --htmx
 ```
 
-### Contrôleur avec Réponse Partielle
+Cela génère :
+- `templates/article/list.ogan` : Page principale avec wrapper simple
+- `templates/article/_list_partial.ogan` : Partial avec `data-htmx-paginated`
 
-Pour éviter la duplication du layout lors des requêtes HTMX :
+### Structure Manuelle
+
+#### 1. Controller
 
 ```php
 use Ogan\View\Helper\HtmxHelper;
 
-class UserController extends AbstractController
+#[Route('/articles', methods: ['GET'])]
+public function index(): Response
 {
-    public function index()
-    {
-        $users = User::paginate(15);
-        
-        // Requête HTMX : retourner seulement le contenu
-        if (HtmxHelper::isHtmxRequest()) {
-            return $this->render('user/_list_partial.ogan', [
-                'users' => $users
-            ]);
-        }
-        
-        // Requête normale : page complète
-        return $this->render('user/index.ogan', [
-            'users' => $users
+    $articles = Article::orderBy('created_at', 'desc')->paginate(15);
+
+    // Requête HTMX (non-boostée) → retourne le partial
+    if (HtmxHelper::isHtmxRequest() && !$this->request->getHeader('HX-Boosted')) {
+        return $this->render('article/_list_partial', [
+            'articles' => $articles
         ]);
     }
+
+    // Requête normale → page complète
+    return $this->render('article/list', ['articles' => $articles]);
 }
 ```
 
-**Paramètres de `linksHtmx()`** :
-| Paramètre | Description | Défaut |
-|-----------|-------------|--------|
-| `$target` | Sélecteur CSS cible | `#content` |
-| `$swap` | Type de swap HTMX | `innerHTML` |
+#### 2. Template Principal (list.ogan)
 
-Les liens générés incluent automatiquement : `hx-get`, `hx-target`, `hx-swap`, `hx-push-url`.
+```html
+{{ extend('layouts/base.ogan') }}
+
+{{ start('body') }}
+<div class="container mx-auto">
+    <h1>Articles</h1>
+
+    <!-- Zone de la liste - PAS d'attributs HTMX ici -->
+    <div id="articles-list">
+        {{ component('article/_list_partial', ['articles' => articles]) }}
+    </div>
+</div>
+{{ end }}
+```
+
+#### 3. Partial (_list_partial.ogan)
+
+```html
+<div id="articles-list" data-htmx-paginated hx-boost="false">
+{% if showFlashOob ?? false %}{{ component('flashes', ['oob' => true]) }}{% endif %}
+<div class="bg-white rounded-lg shadow">
+    <table>
+        {% for article in articles %}
+        <tr>
+            <td>{{ article.title }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+<div class="mt-6">
+    {{ articles.linksHtmx('#articles-list')|raw }}
+</div>
+</div>
+```
+
+> [!CAUTION]
+> **Points critiques :**
+> - Le partial DOIT inclure son propre wrapper avec le même ID
+> - `data-htmx-paginated` active le fix de pagination automatique
+> - `hx-boost="false"` empêche le boost global d'interférer
+> - Le partial ne DOIT PAS commencer par des lignes vides ou commentaires
+
+### Paramètres de `linksHtmx()`
+
+| Paramètre | Description | Obligatoire |
+|-----------|-------------|-------------|
+| `$target` | Sélecteur CSS cible (ex: `#articles-list`) | ✅ Oui |
+| `$swap` | Type de swap HTMX (défaut: `outerHTML`) | Non |
+
+### Messages Flash avec OOB
+
+Pour afficher des messages flash après une action CRUD, le partial peut les recevoir via OOB (Out Of Band) :
+
+```php
+// Dans le controller après création/modification
+return $this->render('article/_list_partial', [
+    'articles' => $articles,
+    'showFlashOob' => true  // Active l'envoi OOB des flashes
+]);
+```
+
+Le flash sera injecté dans l'élément `#flash-messages` de votre layout via `hx-swap-oob`.
+
+### Schéma du Flux
+
+```
+┌─ Clic pagination (page 2) ─────────────────────────────────────┐
+│  hx-get="/articles?page=2"                                      │
+│  hx-target="#articles-list"                                     │
+│  hx-swap="outerHTML"                                            │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─ Serveur détecte HX-Request ───────────────────────────────────┐
+│  → Retourne _list_partial.ogan (sans layout)                   │
+│  → Le partial contient <div id="articles-list" ...>            │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─ Fix JS intercepte le swap ────────────────────────────────────┐
+│  → htmx:beforeSwap déclenché                                   │
+│  → target.outerHTML = response (swap manuel)                   │
+│  → htmx.process(newElement) initialise les nouveaux liens      │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 

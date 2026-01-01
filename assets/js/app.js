@@ -38,16 +38,6 @@ app.register('sidebar', SidebarController);
 // app.register('mon', MonController);
 
 // ─────────────────────────────────────────────────────────────────────────
-// Compatibilité HTMX - Délai pour laisser le DOM se stabiliser
-// ─────────────────────────────────────────────────────────────────────────
-document.addEventListener('htmx:afterSwap', () => {
-    setTimeout(() => app.refresh(), 50);
-});
-document.addEventListener('htmx:load', () => {
-    setTimeout(() => app.refresh(), 50);
-});
-
-// ─────────────────────────────────────────────────────────────────────────
 // Export pour utilisation avancée
 // ─────────────────────────────────────────────────────────────────────────
 window.OganApp = app;
