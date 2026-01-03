@@ -112,7 +112,8 @@ export class Controller {
 
             actions.forEach(action => {
                 // Supporte: event->ctrl#method, event@window->ctrl#method, event@document->ctrl#method
-                const match = action.match(/^(\w+)(?:@(window|document))?->(\w+)#(\w+)$/);
+                // Supporte les noms de controllers avec tirets (ex: media-picker)
+                const match = action.match(/^(\w+)(?:@(window|document))?->([\w-]+)#(\w+)$/);
                 if (!match) return;
 
                 const [, eventName, eventTarget, targetController, methodName] = match;
