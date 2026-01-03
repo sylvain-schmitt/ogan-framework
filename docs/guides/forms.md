@@ -8,6 +8,7 @@ Ce guide explique comment créer, gérer et valider des formulaires dans Ogan Fr
 - [Utiliser un formulaire dans un contrôleur](#utiliser-un-formulaire-dans-un-contrôleur)
 - [Rendu dans les vues](#rendu-dans-les-vues)
 - [Validation des données](#validation-des-données)
+- [Options communes à tous les champs](#options-communes-à-tous-les-champs)
 - [Référence des Champs (Types)](#référence-des-champs-types)
     - [Champs de base](#champs-de-base)
     - [Champs avancés (Couleur, Wysiwyg...)](#champs-avancés)
@@ -174,6 +175,51 @@ $builder->add('email', EmailType::class, [
 *   `Regex(pattern)`
 *   `EqualTo(fieldName)` (ex: confirmation de mot de passe)
 *   `UniqueEntity(Class, field)` (Vérification BDD)
+
+---
+
+## Options communes à tous les champs
+
+Chaque type de champ accepte les options suivantes :
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `label` | `string` | Texte du label (défaut: nom du champ capitalisé) |
+| `label_attr` | `array` | Attributs HTML du label (`class`, `id`, `data-*`...) |
+| `attr` | `array` | Attributs HTML de l'input (`class`, `placeholder`, `id`...) |
+| `required` | `bool` | Affiche une étoile rouge si `true` |
+| `constraints` | `array` | Liste des contraintes de validation |
+| `data` | `mixed` | Valeur par défaut du champ |
+
+### Personnaliser le label avec `label_attr`
+
+L'option `label_attr` permet de remplacer les classes par défaut du label :
+
+```php
+$builder->add('email', EmailType::class, [
+    'label' => 'Adresse email',
+    'label_attr' => [
+        'class' => 'block text-lg font-bold text-blue-600 mb-2'
+    ]
+]);
+```
+
+> ⚠️ **Important** : Lorsque vous fournissez une `class` dans `label_attr`, elle **remplace** les classes par défaut (pas de fusion) pour éviter les conflits de spécificité CSS avec Tailwind.
+
+### Personnaliser l'input avec `attr`
+
+L'option `attr` fonctionne de la même manière pour l'input :
+
+```php
+$builder->add('email', EmailType::class, [
+    'label' => 'Email',
+    'attr' => [
+        'class' => 'w-full px-4 py-3 border-2 border-blue-500 rounded-xl',
+        'placeholder' => 'votre@email.com',
+        'autofocus' => true
+    ]
+]);
+```
 
 ---
 
