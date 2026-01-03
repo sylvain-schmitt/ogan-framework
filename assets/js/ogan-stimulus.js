@@ -98,51 +98,49 @@ export class Controller {
     }
 
     /**
-     * Lie les actions (data-action="event->controller#method")
+     * Lie les actions (data-action="event->controller#method" ou "event@window->controller#method")
      */
     _bindActions() {
         const controllerName = this.constructor.identifier;
-        const actionElements = this.element.querySelectorAll('[data-action]');
+        const actionElements = [
+            ...Array.from(this.element.querySelectorAll('[data-action]')),
+            ...(this.element.dataset.action ? [this.element] : [])
+        ];
 
         actionElements.forEach(el => {
             const actions = el.dataset.action.split(' ');
 
             actions.forEach(action => {
-                const match = action.match(/^(\w+)->(\w+)#(\w+)$/);
+                // Supporte: event->ctrl#method, event@window->ctrl#method, event@document->ctrl#method
+                const match = action.match(/^(\w+)(?:@(window|document))?->(\w+)#(\w+)$/);
                 if (!match) return;
 
-                const [, eventName, targetController, methodName] = match;
+                const [, eventName, eventTarget, targetController, methodName] = match;
 
                 if (targetController !== controllerName) return;
+
+                // Si l'élément est l'élément racine du controller mais que l'action cible un autre controller, on ignore
+                // (sauf si c'est le même controller, déjà vérifié ci-dessus)
+
                 if (typeof this[methodName] !== 'function') {
                     console.warn(`OganStimulus: Method "${methodName}" not found in ${controllerName}`);
                     return;
                 }
 
-                el.addEventListener(eventName, (e) => {
+                const handler = (e) => {
                     this[methodName](e);
-                });
+                };
+
+                if (eventTarget === 'window') {
+                    window.addEventListener(eventName, handler);
+                    // TODO: stocker pour suppression propre dans disconnect()
+                } else if (eventTarget === 'document') {
+                    document.addEventListener(eventName, handler);
+                } else {
+                    el.addEventListener(eventName, handler);
+                }
             });
         });
-
-        // Actions sur l'élément racine
-        if (this.element.dataset.action) {
-            const actions = this.element.dataset.action.split(' ');
-
-            actions.forEach(action => {
-                const match = action.match(/^(\w+)->(\w+)#(\w+)$/);
-                if (!match) return;
-
-                const [, eventName, targetController, methodName] = match;
-
-                if (targetController !== controllerName) return;
-                if (typeof this[methodName] !== 'function') return;
-
-                this.element.addEventListener(eventName, (e) => {
-                    this[methodName](e);
-                });
-            });
-        }
     }
 
     _capitalize(string) {
