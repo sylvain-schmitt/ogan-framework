@@ -13,9 +13,9 @@ class UserController extends AbstractController
 {
     public function index()
     {
-        // Pagine avec 15 éléments par page
+        // Pagine avec 15 éléments par page, triés par date de création (plus récent d'abord)
         // La page courante est auto-détectée depuis ?page=N
-        $users = User::paginate(15);
+        $users = User::latest()->paginate(15);
         
         return $this->render('user/index.ogan', [
             'users' => $users
