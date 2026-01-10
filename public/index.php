@@ -47,7 +47,15 @@ if (file_exists($envFile)) {
 // Le mode debug est lu depuis APP_DEBUG dans .env
 // debug: true → erreurs détaillées (développement)
 // debug: false → page d'erreur générique (production)
-$debug = filter_var($_ENV['APP_DEBUG'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+// Détermination intelligente du mode debug
+// 1. Si APP_DEBUG est défini, on l'utilise
+// 2. Sinon, on le déduit de APP_ENV (prod = false, dev/test = true)
+if (isset($_ENV['APP_DEBUG'])) {
+    $debug = filter_var($_ENV['APP_DEBUG'], FILTER_VALIDATE_BOOLEAN);
+} else {
+    $env = $_ENV['APP_ENV'] ?? 'dev';
+    $debug = $env !== 'prod';
+}
 $kernel = new Kernel(debug: $debug);
 $kernel->run();
 

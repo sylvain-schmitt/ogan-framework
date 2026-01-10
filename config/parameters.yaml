@@ -2,12 +2,13 @@
 
 app:
   env: '%env(APP_ENV)%'
-  debug: true
+  secret: '%env(APP_SECRET)%'
+  debug: '%env(bool:APP_DEBUG)%'
 
 view:
   templates_path: '%kernel.project_dir%/templates'
   default_layout: layouts/base.ogan
-  default_title: Mon site
+  default_title: Les Créas D'elf
   use_compiler: true
   cache_dir: '%kernel.project_dir%/var/cache/templates'
 
@@ -74,7 +75,7 @@ auth:
   # Les rôles sont vérifiés dans l'ordre, le premier qui match est utilisé
   role_redirects:
     ROLE_ADMIN: /dashboard       # Les admins vont au dashboard
-    ROLE_USER: /dashboard       # Les utilisateurs vont au dashboard
+    ROLE_USER: /dashboard          # Les utilisateurs vont au dashboard
     # ROLE_AUTHOR: /my-articles  # Exemple: les auteurs vers leurs articles
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -90,7 +91,7 @@ mail:
   from_name: '%env(MAIL_FROM_NAME)%'
 
 # ─────────────────────────────────────────────────────────────────────────────
-# � UPLOADS & IMAGES
+#  UPLOADS & IMAGES
 # ─────────────────────────────────────────────────────────────────────────────
 uploads:
   directory: '%kernel.project_dir%/public/assets/uploads'  # Dossier par défaut
@@ -98,12 +99,12 @@ uploads:
   format: webp                                              # Format de sortie par défaut
 
 # ─────────────────────────────────────────────────────────────────────────────
-# �🐛 DEBUG (désactiver en production)
+# 🐛 DEBUG (automatique selon APP_ENV)
 # ─────────────────────────────────────────────────────────────────────────────
 debug:
-  enabled: true
-  debug_bar: true
-  collect_queries: true
+  enabled: '%env(bool:APP_DEBUG)%'
+  debug_bar: '%env(bool:APP_DEBUG)%'
+  collect_queries: '%env(bool:APP_DEBUG)%'
   max_dump_depth: 10
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -125,6 +126,6 @@ security:
 # ─────────────────────────────────────────────────────────────────────────────
 frontend:
   htmx:
-    enabled: false                       # Mettre true pour activer HTMX
+    enabled: false                        # Mettre true pour activer HTMX
     progress_bar: true                    # Barre de progression automatique
     script: /assets/js/htmx.min.js
