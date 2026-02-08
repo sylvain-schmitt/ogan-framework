@@ -2,7 +2,7 @@
 
 > _En mémoire d'Ogan 🐕💙 - Un framework PHP moderne créé avec passion pour apprendre et comprendre_
 
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue)](https://www.php.net/)
+[![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ## 🎯 Qu'est-ce que Ogan Framework ?
@@ -65,7 +65,7 @@ ogan-framework/
 
 ### Prérequis
 
-- PHP 8.1 ou supérieur
+- PHP 8.2 ou supérieur
 - Composer
 - Extension PDO (SQLite, MySQL ou PostgreSQL)
 
