@@ -337,11 +337,11 @@ Documentation complète disponible dans le dossier [`docs/`](docs/) :
 
 - **[Guide Pédagogique](docs/guides/pedagogique.md)** - Guide complet pour comprendre le framework
 - **[Installation](docs/guides/installation.md)** - Guide d'installation détaillé
-- **[Syntaxe des Templates](docs/guides/template-syntax.md)** - Documentation de la syntaxe `.ogan`
-- **[Formulaires](docs/examples/form-types.md)** - Guide complet des formulaires
+- **[Syntaxe des Templates](docs/guides/templates.md)** - Documentation de la syntaxe `.ogan`
+- **[Formulaires](docs/guides/forms.md)** - Guide complet des formulaires
 - **[Génération de Code](docs/guides/code-generation.md)** - Utilisation des générateurs
 - **[Migrations](docs/guides/migrations.md)** - Système de migrations
-- **[ORM & Relations](docs/guides/orm-relations.md)** - Utilisation de l'ORM
+- **[ORM & Relations](docs/guides/orm.md)** - Utilisation de l'ORM
 - **[API du Framework](docs/reference/framework-api.md)** - Documentation de l'API
 
 ## 🐳 Docker (Optionnel)

@@ -2,7 +2,21 @@
 
 > Vue d'ensemble de l'état d'avancement des améliorations et fonctionnalités
 
-**Dernière mise à jour** : 2025-12-07 (Phase 1.4 - Tests PHPUnit terminés)
+**Dernière mise à jour** : 2026-02-08 (Phase V2 - CI/CD + Tests Core)
+
+---
+
+## ✅ Phase V2 : Infrastructure Qualité (ogan-core) - COMPLÉTÉE
+
+### ✅ V2.1 CI/CD et Tests
+**Statut** : ✅ **TERMINÉ**  
+**Date** : 2026-02-08
+
+- ✅ GitHub Actions CI/CD (PHP 8.1, 8.2, 8.3)
+- ✅ PHPStan niveau 5
+- ✅ PHP-CS-Fixer PSR-12
+- ✅ 24 tests unitaires (QueryBuilder, Container)
+- ✅ Scripts Composer (test, analyse, cs-fix)
 
 ---
 

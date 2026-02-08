@@ -60,3 +60,6 @@ tailwind.config.js
 # SEO generated files
 public/sitemap.xml
 public/robots.txt
+
+# Agent workflows (local only)
+.agent/
